@@ -1,0 +1,28 @@
+import { prisma } from "@/lib/prisma";
+import AdminPricingClient from "@/components/AdminPricingClient";
+
+export const metadata = {
+  title: "Pricing Matrix — Admin",
+};
+
+export default async function AdminPricingPage() {
+  const [cars, cities, routePricings, rentalPricings, packages] = await Promise.all([
+    prisma.car.findMany({ where: { isActive: true } }),
+    prisma.city.findMany({ where: { isOperational: true } }),
+    prisma.routePricing.findMany(),
+    prisma.rentalPricing.findMany(),
+    prisma.rentalPackage.findMany(),
+  ]);
+
+  return (
+    <div className="p-6 lg:p-8">
+       <AdminPricingClient 
+          cars={cars} 
+          cities={cities} 
+          initialRoutePricings={routePricings} 
+          initialRentalPricings={rentalPricings} 
+          packages={packages} 
+        />
+    </div>
+  );
+}

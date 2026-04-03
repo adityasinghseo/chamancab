@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─────────────────────────────────────────────
+// ADMINS
+// ─────────────────────────────────────────────
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String?
+  role      String   @default("ADMIN") // SUPER_ADMIN, ADMIN etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CITIES
+// ─────────────────────────────────────────────
+model City {
+  id            String   @id @default(cuid())
+  name          String
+  state         String
+  isOperational Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  locations         Location[]
+  routePricingsFrom RoutePricing[] @relation("RoutePricingFrom")
+  routePricingsTo   RoutePricing[] @relation("RoutePricingTo")
+  rentalPricings    RentalPricing[]
+  bookingsFrom      Booking[]      @relation("BookingFromCity")
+  bookingsTo        Booking[]      @relation("BookingToCity")
+}
+
+// ─────────────────────────────────────────────
+// LOCATIONS / PICKUP HUBS
+// ─────────────────────────────────────────────
+model Location {
+  id            String   @id @default(cuid())
+  cityId        String
+  landmark      String
+  latitude      Float?
+  longitude     Float?
+  isOperational Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  city           City      @relation(fields: [cityId], references: [id])
+  pickupBookings Booking[] @relation("BookingPickupLocation")
+  dropBookings   Booking[] @relation("BookingDropLocation")
+}
+
+// ─────────────────────────────────────────────
+// CARS
+// ─────────────────────────────────────────────
+model Car {
+  id              String   @id @default(cuid())
+  name            String   // e.g. "Wagon R CNG"
+  type            String   // "Hatchback" | "Sedan" | "SUV" | "MUV"
+  fuelType        String   // "CNG" | "Petrol" | "Diesel"
+  seats           Int
+  hasAC           Boolean  @default(true)
+  luggageCapacity Int      @default(2) // number of bags
+  imageUrl        String?
+  description     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  routePricings  RoutePricing[]
+  rentalPricings RentalPricing[]
+  bookings       Booking[]
+}
+
+// ─────────────────────────────────────────────
+// RENTAL PACKAGES (4hr/40km etc.)
+// ─────────────────────────────────────────────
+model RentalPackage {
+  id          String   @id @default(cuid())
+  name        String   // "4hr/40km"
+  hours       Int
+  kilometers  Int
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0) // for display ordering
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pricings RentalPricing[]
+  bookings Booking[]
+}
+
+// ─────────────────────────────────────────────
+// ROUTE PRICING — price per (fromCity → toCity) per Car per TripType
+// Admin sets: Delhi→Jaipur, WagonR, ONE_WAY = ₹2800
+// ─────────────────────────────────────────────
+model RoutePricing {
+  id          String   @id @default(cuid())
+  fromCityId  String
+  toCityId    String
+  carId       String
+  tripType    String   // "ONE_WAY" | "ROUND_TRIP"
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fromCity City @relation("RoutePricingFrom", fields: [fromCityId], references: [id])
+  toCity   City @relation("RoutePricingTo",   fields: [toCityId],   references: [id])
+  car      Car  @relation(fields: [carId], references: [id])
+
+  @@unique([fromCityId, toCityId, carId, tripType])
+}
+
+// ─────────────────────────────────────────────
+// RENTAL PRICING — price per Package per Car per City
+// Admin sets: Delhi, 4hr/40km, WagonR = ₹1200
+// ─────────────────────────────────────────────
+model RentalPricing {
+  id        String   @id @default(cuid())
+  cityId    String
+  packageId String
+  carId     String
+  price     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city    City          @relation(fields: [cityId],    references: [id])
+  package RentalPackage @relation(fields: [packageId], references: [id])
+  car     Car           @relation(fields: [carId],     references: [id])
+
+  @@unique([cityId, packageId, carId])
+}
+
+// ─────────────────────────────────────────────
+// BOOKINGS
+// ─────────────────────────────────────────────
+model Booking {
+  id        String @id @default(cuid())
+  referenceId String @unique // e.g. "CH-2024-001"
+
+  // Trip type
+  tripType  String // "ONE_WAY" | "ROUND_TRIP" | "RENTAL"
+
+  // Customer info (no login required)
+  customerName  String
+  customerPhone String
+  customerEmail String?
+
+  // Trip details
+  fromCityId        String?
+  toCityId          String?
+  pickupLocationId  String?
+  dropLocationId    String?
+  packageId         String? // for RENTAL trips
+  carId             String
+
+  pickupDate DateTime
+  pickupTime String
+
+  // Pricing
+  amount Float
+
+  // Statuses
+  status        String @default("PENDING")   // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  paymentStatus String @default("PENDING")   // PENDING | PAID | FAILED | REFUNDED
+  paymentMethod String @default("PAY_ON_PICKUP") // PAY_ON_PICKUP | RAZORPAY
+
+  // Admin notes
+  specialRequests String?
+  adminNotes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromCity       City?          @relation("BookingFromCity",        fields: [fromCityId],       references: [id])
+  toCity         City?          @relation("BookingToCity",          fields: [toCityId],         references: [id])
+  pickupLocation Location?      @relation("BookingPickupLocation",  fields: [pickupLocationId], references: [id])
+  dropLocation   Location?      @relation("BookingDropLocation",    fields: [dropLocationId],   references: [id])
+  package        RentalPackage? @relation(fields: [packageId],      references: [id])
+  car            Car            @relation(fields: [carId],          references: [id])
+  payment        Payment?
+}
+
+// ─────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────
+model Payment {
+  id                String   @id @default(cuid())
+  bookingId         String   @unique
+  method            String   // "PAY_ON_PICKUP" | "RAZORPAY"
+  amount            Float
+  status            String   // "PENDING" | "SUCCESS" | "FAILED"
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  paidAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
