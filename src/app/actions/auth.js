@@ -40,7 +40,7 @@ export async function login(formData) {
     const cookieStore = await cookies();
     cookieStore.set("admin_session", admin.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
