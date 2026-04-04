@@ -7,12 +7,25 @@ import { sendLoginOtp, verifyLoginOtp } from "./auth";
 // ── Admin: Create Offer ──────────────────────────────────────────
 export async function createOffer(formData) {
   try {
+    // Format date "2026-04-05" → "5 April 2026"
+    const dateRaw = formData.get("date");
+    const dateFormatted = new Date(dateRaw + "T00:00:00")
+      .toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+    // Format time "15:30" → "3:30 PM"
+    const timeRaw = formData.get("time");
+    const [hours, minutes] = timeRaw.split(":");
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    const timeFormatted = `${h12}:${minutes} ${ampm}`;
+
     await prisma.offer.create({
       data: {
         fromCity:      formData.get("fromCity"),
         toCity:        formData.get("toCity"),
-        date:          formData.get("date"),
-        time:          formData.get("time"),
+        date:          dateFormatted,
+        time:          timeFormatted,
         price:         parseInt(formData.get("price")),
         originalPrice: parseInt(formData.get("originalPrice")),
         seatsAvailable:parseInt(formData.get("seatsAvailable") || "1"),
