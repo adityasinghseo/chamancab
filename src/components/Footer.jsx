@@ -24,12 +24,15 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="lg:col-span-3 lg:col-start-6">
-            <h3 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Services</h3>
+            <h3 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Quick Links</h3>
             <ul className="space-y-4">
-              <li><a href="/" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> One Way & Round Trip</a></li>
-              <li><a href="/" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Local Rental</a></li>
+              <li><a href="/about" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> About Us</a></li>
+              <li><a href="/contact" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Contact Us</a></li>
               <li><a href="/self-drive" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Self Drive Cars</a></li>
               <li><a href="/hire-driver" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Hire Driver</a></li>
+              <li><a href="/terms" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Terms &amp; Conditions</a></li>
+              <li><a href="/privacy" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Privacy Policy</a></li>
+              <li><a href="/refund" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Refund Policy</a></li>
             </ul>
           </div>
 
@@ -80,9 +83,11 @@ export default function Footer() {
             © {new Date().getFullYear()} Chaman Tour and Travels. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="/admin" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Admin Portal</a>
-            <a href="#" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Privacy Policy</a>
-            <a href="#" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Terms of Service</a>
+            <a href="/about" className="text-white/40 hover:text-white transition-colors text-xs font-medium">About Us</a>
+            <a href="/contact" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Contact</a>
+            <a href="/privacy" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Privacy Policy</a>
+            <a href="/terms" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Terms</a>
+            <a href="/refund" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Refund Policy</a>
           </div>
         </div>
       </div>
