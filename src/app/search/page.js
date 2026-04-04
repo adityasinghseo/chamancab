@@ -25,13 +25,22 @@ function formatTime(t) {
 
 export default async function SearchPage({ searchParams }) {
   const params = await searchParams;
-  const { type, fromCityId, packageId, pickupDate, pickupTime, fromName, fromLat, fromLng, toName, toLat, toLng } = params;
+  const { type, fromCityId, toCityId, packageId, pickupDate, pickupTime, fromName, fromLat, fromLng, toName, toLat, toLng } = params;
 
-  // Rental relies on DB Cities
-  const [fromCity, rentalPackage] = await Promise.all([
+  // Rental relies on DB Cities; also resolve IDs for short-route fixed pricing
+  const [fromCity, rentalPackage, allCities] = await Promise.all([
     fromCityId ? prisma.city.findUnique({ where: { id: fromCityId } }) : null,
     packageId   ? prisma.rentalPackage.findUnique({ where: { id: packageId } }) : null,
+    prisma.city.findMany({ select: { id: true, name: true } }),
   ]);
+
+  // Helper: match a display name string to a city ID (case-insensitive partial match)
+  function resolveCityId(displayName) {
+    if (!displayName) return null;
+    const lower = displayName.toLowerCase();
+    const match = allCities.find(c => lower.includes(c.name.toLowerCase()));
+    return match?.id || null;
+  }
 
   let carsWithPrices = [];
   let mapDistance = null;
@@ -43,16 +52,21 @@ export default async function SearchPage({ searchParams }) {
       const osrm = await getOsrmDistanceAndDuration(fromLat, fromLng, toLat, toLng);
       
       if (osrm) {
-        // Round trip doubles the UI display distance
         let calcDistance = osrm.distanceKm;
         if (type === "ROUND_TRIP") calcDistance *= 2;
-        
         mapDistance = calcDistance.toFixed(1);
         mapDuration = osrm.durationMinutes;
 
+        // Resolve DB city IDs from location display names for fixed-route pricing
+        const resolvedFromId = fromCityId || resolveCityId(fromName);
+        const resolvedToId   = toCityId   || resolveCityId(toName);
+
         for (const car of activeCars) {
-          // Send the raw single-way map distance to the Engine; the Engine multiplies it!
-          const breakdown = calculatePriceBreakdown(car.id, osrm.distanceKm, type, pickupTime, 1);
+          // Pass raw one-way distance; the engine applies tier logic internally
+          const breakdown = calculatePriceBreakdown(
+            car.id, osrm.distanceKm, type, pickupTime, 1,
+            resolvedFromId, resolvedToId
+          );
           if (breakdown) {
             carsWithPrices.push({ car, price: breakdown.totalPayable, breakdown });
           }
@@ -185,7 +199,7 @@ export default async function SearchPage({ searchParams }) {
                       {CAR_TYPE_ICONS[car.type] ?? "directions_car"}
                     </span>
                     <div className="mt-2 text-primary font-black text-xs uppercase tracking-widest whitespace-nowrap">
-                      ₹{breakdown?.ratePerKm}/km
+                      {breakdown?.pricingTier === "fixed_route" ? "Fixed Price" : `₹${breakdown?.ratePerKm}/km`}
                     </div>
                   </div>
 
@@ -209,11 +223,20 @@ export default async function SearchPage({ searchParams }) {
                     {/* Fare Calculation Breakdown Grid */}
                     {breakdown && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-black/30 rounded-xl p-3 border border-white/5">
-                        <div>
-                          <p className="text-white/40 mb-1">Billed Distance</p>
-                          <p className="text-white font-bold">{breakdown.chargeDistance} KM</p>
-                          {(breakdown.chargeDistance === 250) && <p className="text-primary/70 text-[10px] mt-0.5">*Min. outstation</p>}
-                        </div>
+                        {breakdown.pricingTier === "fixed_route" ? (
+                          <div className="col-span-2">
+                            <p className="text-white/40 mb-1">Pricing</p>
+                            <p className="text-primary font-bold">Fixed Route Price</p>
+                            <p className="text-white/30 text-[10px] mt-0.5">Short distance flat rate</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-white/40 mb-1">Billed Distance</p>
+                            <p className="text-white font-bold">{breakdown.chargeDistance} KM</p>
+                            {breakdown.pricingTier === "medium_roundtrip" && <p className="text-primary/70 text-[10px] mt-0.5">*2× actual dist.</p>}
+                            {breakdown.chargeDistance === 250 && <p className="text-primary/70 text-[10px] mt-0.5">*Min. outstation</p>}
+                          </div>
+                        )}
                         <div>
                           <p className="text-white/40 mb-1">Base Fare</p>
                           <p className="text-white font-bold">₹{breakdown.baseFare.toLocaleString("en-IN")}</p>
