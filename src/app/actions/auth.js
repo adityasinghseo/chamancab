@@ -76,3 +76,98 @@ export async function getSession() {
     return null;
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// USER LOGIN VIA OTP (FAST2SMS)
+// ─────────────────────────────────────────────────────────────
+
+export async function sendLoginOtp(phone) {
+  if (!phone || phone.length < 10) {
+    return { error: "Invalid phone number." };
+  }
+
+  // DUMMY OTP MODE IS ACTIVE AS REQUESTED
+  try {
+    const code = "1111"; // Hardcoded OTP
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+
+    await prisma.otp.create({
+      data: { phone, code, expiresAt },
+    });
+
+    // Bypass Fast2SMS entirely for now until API approved.
+    console.log(`[AUTH] Dummy OTP 1111 generated for ${phone}`);
+    
+    return { success: true, message: "Testing Mode: Enter 1111" };
+  } catch (error) {
+    console.error("sendLoginOtp error:", error);
+    return { error: "Database error while preparing OTP." };
+  }
+}
+
+export async function verifyLoginOtp(phone, code) {
+  if (!phone || !code) {
+    return { error: "Phone and OTP are required." };
+  }
+
+  try {
+    // Universal Dummy Master Code for Rapid Testing
+    if (code !== "1111") {
+      // Validate OTP
+      const otpRecord = await prisma.otp.findFirst({
+        where: { phone, code, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (!otpRecord) {
+        return { error: "Invalid or expired OTP." };
+      }
+    }
+
+    // Register or find user
+    let user = await prisma.user.findUnique({ where: { phone } });
+    if (!user) {
+      user = await prisma.user.create({ data: { phone } });
+    }
+
+    // Destroy OTP so it's strictly single-use
+    if (code !== "1111") {
+      await prisma.otp.deleteMany({ where: { phone } });
+    }
+
+    // Store simple secure cookie session (matches admin auth pattern)
+    const cookieStore = await cookies();
+    cookieStore.set("chamancab_user_session", user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 30 * 24 * 60 * 60, // 30 Days
+      path: "/",
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    console.error("verifyLoginOtp error:", error);
+    return { error: "An error occurred while verifying the code." };
+  }
+}
+
+export async function logoutUser() {
+  const cookieStore = await cookies();
+  cookieStore.delete("chamancab_user_session");
+  return { success: true };
+}
+
+export async function getUserSession() {
+  try {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get("chamancab_user_session")?.value;
+    if (!sessionId) return null;
+
+    return await prisma.user.findUnique({
+      where: { id: sessionId },
+      select: { id: true, phone: true, name: true, email: true }
+    });
+  } catch (err) {
+    return null;
+  }
+}

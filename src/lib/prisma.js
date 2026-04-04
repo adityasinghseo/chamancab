@@ -1,22 +1,18 @@
-// Prisma 7 singleton for Next.js App Router
-// Using a module-level lazy initialization pattern
-
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import path from "path";
 
-let _prisma;
+const globalForPrisma = global;
 
-export function getPrisma() {
-  if (!_prisma) {
-    const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
-    _prisma = new PrismaClient({ adapter });
-  }
-  return _prisma;
+if (!globalForPrisma.prisma) {
+  // Use absolute path for dev.db in workspace root
+  const dbPath = path.join(process.cwd(), "dev.db");
+  const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+  
+  globalForPrisma.prisma = new PrismaClient({ 
+    adapter,
+    log: ["error"]
+  });
 }
 
-// Named export for convenience (lazy — resolved at call time, not import time)
-export const prisma = new Proxy({}, {
-  get(_, prop) {
-    return getPrisma()[prop];
-  }
-});
+export const prisma = globalForPrisma.prisma;

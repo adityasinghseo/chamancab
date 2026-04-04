@@ -6,10 +6,9 @@ export const metadata = {
 };
 
 export default async function AdminPricingPage() {
-  const [cars, cities, routePricings, rentalPricings, packages] = await Promise.all([
+  const [cars, cities, rentalPricings, packages] = await Promise.all([
     prisma.car.findMany({ where: { isActive: true } }),
     prisma.city.findMany({ where: { isOperational: true } }),
-    prisma.routePricing.findMany(),
     prisma.rentalPricing.findMany(),
     prisma.rentalPackage.findMany(),
   ]);
@@ -19,7 +18,6 @@ export default async function AdminPricingPage() {
        <AdminPricingClient 
           cars={cars} 
           cities={cities} 
-          initialRoutePricings={routePricings} 
           initialRentalPricings={rentalPricings} 
           packages={packages} 
         />

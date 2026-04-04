@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import PrintButton from "@/components/PrintButton";
 
 const STATUS_CONFIG = {
   CONFIRMED: { label: "Confirmed",  bg: "bg-green-500/20", text: "text-green-400",  icon: "check_circle",  border: "border-green-500/30" },
@@ -226,7 +227,7 @@ export default async function ConfirmationPage({ searchParams }) {
                   <li>• Pay ₹{booking.amount.toLocaleString("en-IN")} directly to the driver (Cash or UPI)</li>
                 )}
                 <li>• Driver details will be shared 1 hour before your scheduled pickup</li>
-                <li>• For any queries, call us at <strong className="text-yellow-300">+91 XXXXX XXXXX</strong></li>
+                <li>• For any queries, call us at <strong className="text-yellow-300">+91 63864 99107</strong></li>
               </ul>
             </div>
           </div>
@@ -241,15 +242,12 @@ export default async function ConfirmationPage({ searchParams }) {
             <span className="material-symbols-outlined text-lg">home</span>
             Back to Home
           </Link>
+
+          {/* New Native Client Print Button */}
+          <PrintButton />
+
           <a
-            href="javascript:window.print()"
-            className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold py-3.5 rounded-xl transition-all text-sm"
-          >
-            <span className="material-symbols-outlined text-lg">print</span>
-            Print / Download
-          </a>
-          <a
-            href={`https://wa.me/?text=My%20Chaman%20Cab%20booking%20ref%3A%20%23${booking.referenceId}%20from%20${booking.fromCity?.name ?? ''}%20to%20${booking.toCity?.name ?? ''}%20on%20${new Date(booking.pickupDate).toLocaleDateString('en-IN')}`}
+            href={`https://wa.me/916386499107?text=Hello%20Admin%2C%20I%20have%20just%20made%20a%20booking%20on%20Chaman%20Cab!%0A%0A*Reference%3A*%20%23${booking.referenceId}%0A*From%3A*%20${booking.fromCity?.name ?? ''}%0A*To%3A*%20${booking.toCity?.name ?? ''}%0A*Date%3A*%20${new Date(booking.pickupDate).toLocaleDateString('en-IN')}%0A*Passenger%3A*%20${booking.customerName}%0A*Contact%3A*%20${booking.customerPhone}%0A%0APlease%20confirm%20my%20booking!`}
             target="_blank"
             className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl transition-all text-sm"
           >

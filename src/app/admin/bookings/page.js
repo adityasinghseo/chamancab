@@ -6,21 +6,77 @@ export const metadata = {
 };
 
 export default async function AdminBookingsPage() {
-  const bookings = await prisma.booking.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      car:            true,
-      fromCity:       true,
-      toCity:         true,
-      pickupLocation: true,
-      dropLocation:   true,
-      package:        true,
-    },
-  });
+  const [bookings, selfDriveBookings, driverBookings] = await Promise.all([
+    prisma.booking.findMany({
+      include: {
+        car:            true,
+        fromCity:       true,
+        toCity:         true,
+        pickupLocation: true,
+        dropLocation:   true,
+        package:        true,
+      },
+    }),
+    prisma.selfDriveBooking.findMany({
+      include: { car: true }
+    }),
+    prisma.driverBooking.findMany({
+      include: { driver: true }
+    })
+  ]);
+
+  const combinedBookings = [
+    ...bookings.map(b => ({ ...b, isSelfDrive: false, isDriverOnly: false })),
+    ...selfDriveBookings.map(s => ({
+       id: s.id,
+       referenceId: s.referenceId,
+       tripType: "SELF_DRIVE",
+       customerName: s.customerName,
+       customerPhone: s.customerPhone,
+       customerEmail: s.customerEmail,
+       pickupLocationText: s.pickupLocation,
+       car: s.car,
+       pickupDate: s.pickupDate,
+       pickupTime: s.pickupTime,
+       amount: s.amount,
+       status: s.status,
+       paymentStatus: s.paymentStatus,
+       paymentMethod: "DEPOSIT",
+       createdAt: s.createdAt,
+       isSelfDrive: true,
+       isDriverOnly: false,
+       deposit: s.deposit,
+       returnDate: s.returnDate,
+       returnTime: s.returnTime,
+    })),
+    ...driverBookings.map(d => ({
+       id: d.id,
+       referenceId: d.referenceId,
+       tripType: "DRIVER",
+       customerName: d.customerName,
+       customerPhone: d.customerPhone,
+       customerEmail: d.customerEmail,
+       pickupLocationText: d.pickupLocation,
+       driver: d.driver,
+       pickupDate: d.startDate,
+       pickupTime: d.startTime,
+       amount: d.amount,
+       status: d.status,
+       paymentStatus: d.paymentStatus,
+       paymentMethod: "CASH",
+       createdAt: d.createdAt,
+       isSelfDrive: false,
+       isDriverOnly: true,
+       totalHours: d.totalHours
+    }))
+  ];
+
+  // Sort universally by Creation Date descending
+  combinedBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <div className="p-6 lg:p-8">
-       <AdminBookingsClient initialBookings={bookings || []} />
+       <AdminBookingsClient initialBookings={combinedBookings} />
     </div>
   );
 }

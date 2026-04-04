@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -36,6 +37,26 @@ model City {
   rentalPricings    RentalPricing[]
   bookingsFrom      Booking[]      @relation("BookingFromCity")
   bookingsTo        Booking[]      @relation("BookingToCity")
+  distancesFrom     CityDistance[] @relation("DistanceFromCity")
+  distancesTo       CityDistance[] @relation("DistanceToCity")
+}
+
+// ─────────────────────────────────────────────
+// CITY DISTANCES (Dynamic One-Way Mapping)
+// ─────────────────────────────────────────────
+model CityDistance {
+  id         String   @id @default(cuid())
+  fromCityId String
+  toCityId   String
+  distanceKm Float
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  fromCity   City     @relation("DistanceFromCity", fields: [fromCityId], references: [id], onDelete: Cascade)
+  toCity     City     @relation("DistanceToCity",   fields: [toCityId],   references: [id], onDelete: Cascade)
+
+  @@unique([fromCityId, toCityId])
 }
 
 // ─────────────────────────────────────────────
@@ -152,11 +173,12 @@ model Booking {
   customerPhone String
   customerEmail String?
 
-  // Trip details
   fromCityId        String?
   toCityId          String?
   pickupLocationId  String?
   dropLocationId    String?
+  pickupAddress     String?
+  dropAddress       String?
   packageId         String? // for RENTAL trips
   carId             String
 
@@ -170,6 +192,10 @@ model Booking {
   status        String @default("PENDING")   // PENDING | CONFIRMED | COMPLETED | CANCELLED
   paymentStatus String @default("PENDING")   // PENDING | PAID | FAILED | REFUNDED
   paymentMethod String @default("PAY_ON_PICKUP") // PAY_ON_PICKUP | RAZORPAY
+
+  // User Info (optional if they log in)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
 
   // Admin notes
   specialRequests String?
@@ -204,4 +230,124 @@ model Payment {
   updatedAt         DateTime @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// USERS & AUTHENTICATION
+// ─────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings  Booking[]
+  selfDriveBookings SelfDriveBooking[]
+  driverBookings    DriverBooking[]
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+// ─────────────────────────────────────────────
+// SELF DRIVE CARS & BOOKINGS
+// ─────────────────────────────────────────────
+model SelfDriveCar {
+  id              String   @id @default(cuid())
+  name            String
+  type            String   // "Hatchback", "Sedan", etc.
+  fuelType        String
+  transmission    String   @default("Manual")
+  seats           Int
+  price12hr       Float
+  price24hr       Float
+  extraKmRate     Float
+  extraHourRate   Float
+  under12HourRate Float    @default(150)
+  deposit         Float    @default(5000)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bookings        SelfDriveBooking[]
+}
+
+model SelfDriveBooking {
+  id              String   @id @default(cuid())
+  referenceId     String   @unique
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  
+  carId           String
+  car             SelfDriveCar @relation(fields: [carId], references: [id])
+
+  pickupLocation  String
+  pickupDate      DateTime // Represents the date
+  pickupTime      String   // Represents "14:30"
+  returnDate      DateTime
+  returnTime      String
+
+  amount          Float    // Estimated rent sum
+  deposit         Float    @default(5000)
+  
+  status          String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
+
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// DRIVERS & DRIVER BOOKINGS
+// ─────────────────────────────────────────────
+model Driver {
+  id           String   @id @default(cuid())
+  name         String
+  dutyHours    String   // e.g., "8 Hours", "12 Hours"
+  costPerHour  Float    
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  bookings     DriverBooking[]
+}
+
+model DriverBooking {
+  id              String   @id @default(cuid())
+  referenceId     String   @unique
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  
+  driverId        String
+  driver          Driver   @relation(fields: [driverId], references: [id])
+
+  pickupLocation  String
+  startDate       DateTime
+  startTime       String
+
+  totalHours      Float    // e.g. 8, 12 based on the selection
+  amount          Float
+
+  status          String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  paymentStatus   String   @default("PENDING")
+  paymentMethod   String   @default("CASH")
+
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

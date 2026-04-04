@@ -8,42 +8,56 @@ const tabConfig = [
   { id: "ROUND_TRIP", label: "Round Trip",   icon: "loop" },
 ];
 
+import LocationAutocomplete from "./LocationAutocomplete";
+
 export default function HomeClient({ cities, packages }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("ONE_WAY");
 
   // Form state
-  const [fromCityId,  setFromCityId]  = useState("");
-  const [toCityId,    setToCityId]    = useState("");
-  const [pickupLocId, setPickupLocId] = useState("");
-  const [dropLocId,   setDropLocId]   = useState("");
-  const [packageId,   setPackageId]   = useState("");
-  const [pickupDate,  setPickupDate]  = useState("");
-  const [pickupTime,  setPickupTime]  = useState("");
-
-  // Derived lists
-  const fromCity  = cities.find((c) => c.id === fromCityId);
-  const toCity    = cities.find((c) => c.id === toCityId);
-  const pickupLocs = fromCity?.locations ?? [];
-  const dropLocs   = toCity?.locations   ?? [];
+  const [fromLocation, setFromLocation] = useState(null);
+  const [toLocation, setToLocation] = useState(null);
+  
+  // Rental specific
+  const [fromCityId, setFromCityId] = useState("");
+  const [packageId, setPackageId] = useState("");
+  
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!fromCityId || !pickupDate || !pickupTime) return;
-    if (activeTab !== "RENTAL" && !toCityId) return;
-    if (activeTab === "RENTAL" && !packageId) return;
+    if (!pickupDate || !pickupTime) return;
 
-    const params = new URLSearchParams({
-      type: activeTab,
-      fromCityId,
-      pickupDate,
-      pickupTime,
-      ...(pickupLocId && { pickupLocId }),
-      ...(activeTab !== "RENTAL" && toCityId   && { toCityId }),
-      ...(activeTab !== "RENTAL" && dropLocId   && { dropLocId }),
-      ...(activeTab === "RENTAL" && packageId   && { packageId }),
-    });
-    router.push(`/search?${params.toString()}`);
+    if (activeTab === "RENTAL") {
+      if (!fromCityId || !packageId) return;
+      const params = new URLSearchParams({
+        type: activeTab,
+        fromCityId,
+        packageId,
+        pickupDate,
+        pickupTime,
+      });
+      router.push(`/search?${params.toString()}`);
+    } else {
+      // ONE_WAY and ROUND_TRIP uses dynamic map locations
+      if (!fromLocation || !toLocation) {
+        alert("Please select valid Pickup and Drop locations from the suggestions dropdown!");
+        return;
+      }
+      const params = new URLSearchParams({
+        type: activeTab,
+        fromName: fromLocation.name,
+        fromLat: fromLocation.lat,
+        fromLng: fromLocation.lng,
+        toName: toLocation.name,
+        toLat: toLocation.lat,
+        toLng: toLocation.lng,
+        pickupDate,
+        pickupTime,
+      });
+      router.push(`/search?${params.toString()}`);
+    }
   };
 
   const inputClass =
@@ -71,9 +85,11 @@ export default function HomeClient({ cities, packages }) {
                 <p className="text-primary text-[10px] font-bold uppercase tracking-widest">Reliable Cab Service</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-medium">
-              <a href="/admin" className="hover:text-primary transition-colors">Admin</a>
-              <a href="tel:+919876543210" className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-4 py-2 rounded-full transition-colors">
+            <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-bold tracking-wide">
+              <a href="/self-drive" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">car_rental</span> Self Drive Cars</a>
+              <a href="/hire-driver" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">person_search</span> Hire Driver</a>
+              <a href="/admin" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">admin_panel_settings</span> Admin</a>
+              <a href="tel:+919876543210" className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-5 py-2.5 rounded-full transition-colors ml-2">
                 <span className="material-symbols-outlined text-lg">call</span>
                 Call Now
               </a>
@@ -98,7 +114,7 @@ export default function HomeClient({ cities, packages }) {
               {tabConfig.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); setToCityId(""); setPickupLocId(""); setDropLocId(""); setPackageId(""); }}
+                  onClick={() => { setActiveTab(tab.id); setToLocation(null); setFromLocation(null); setFromCityId(""); setPackageId(""); }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                     activeTab === tab.id
                       ? "bg-primary text-[#181611] shadow-lg"
@@ -114,103 +130,50 @@ export default function HomeClient({ cities, packages }) {
             <form onSubmit={handleSearch}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                {/* From City */}
-                <div>
-                  <label className={labelClass}>
-                    <span className="material-symbols-outlined text-xs mr-1 align-middle">location_on</span>
-                    {activeTab === "RENTAL" ? "City" : "From City"}
-                  </label>
-                  <div className="relative">
-                    <select
-                      required
-                      value={fromCityId}
-                      onChange={(e) => { setFromCityId(e.target.value); setPickupLocId(""); }}
-                      className={selectClass}
-                    >
-                      <option value="">Select city...</option>
-                      {cities.map((c) => (
-                        <option key={c.id} value={c.id} className="bg-[#2a2410] text-white">{c.name}</option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
-                  </div>
-                </div>
-
-                {/* Pickup Location */}
-                <div>
-                  <label className={labelClass}>
-                    <span className="material-symbols-outlined text-xs mr-1 align-middle">my_location</span>
-                    Pickup Location
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={pickupLocId}
-                      onChange={(e) => setPickupLocId(e.target.value)}
-                      className={selectClass}
-                      disabled={!fromCityId}
-                    >
-                      <option value="">Select pickup hub...</option>
-                      {pickupLocs.map((l) => (
-                        <option key={l.id} value={l.id} className="bg-[#2a2410] text-white">{l.landmark}</option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
-                  </div>
-                </div>
-
-                {/* To City (One Way + Round Trip) */}
-                {activeTab !== "RENTAL" && (
+                {/* Rental uses City Dropdown, others use Live Map Location */}
+                {activeTab === "RENTAL" ? (
                   <div>
                     <label className={labelClass}>
-                      <span className="material-symbols-outlined text-xs mr-1 align-middle">flag</span>
-                      Destination City
+                      <span className="material-symbols-outlined text-xs mr-1 align-middle">location_on</span>
+                      Select City
                     </label>
                     <div className="relative">
                       <select
                         required
-                        value={toCityId}
-                        onChange={(e) => { setToCityId(e.target.value); setDropLocId(""); }}
+                        value={fromCityId}
+                        onChange={(e) => setFromCityId(e.target.value)}
                         className={selectClass}
                       >
-                        <option value="">Select destination...</option>
-                        {cities.filter((c) => c.id !== fromCityId).map((c) => (
+                        <option value="">Choose city...</option>
+                        {cities.map((c) => (
                           <option key={c.id} value={c.id} className="bg-[#2a2410] text-white">{c.name}</option>
                         ))}
                       </select>
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
                     </div>
                   </div>
-                )}
-
-                {/* Drop Location (One Way) */}
-                {activeTab === "ONE_WAY" && (
-                  <div>
-                    <label className={labelClass}>
-                      <span className="material-symbols-outlined text-xs mr-1 align-middle">location_off</span>
-                      Drop Location
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={dropLocId}
-                        onChange={(e) => setDropLocId(e.target.value)}
-                        className={selectClass}
-                        disabled={!toCityId}
-                      >
-                        <option value="">Select drop hub...</option>
-                        {dropLocs.map((l) => (
-                          <option key={l.id} value={l.id} className="bg-[#2a2410] text-white">{l.landmark}</option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
-                    </div>
-                  </div>
+                ) : (
+                  <>
+                    <LocationAutocomplete 
+                      label="Pickup Source" 
+                      placeholder="Enter pickup address, landmark or city..." 
+                      icon="my_location" 
+                      onSelect={(loc) => setFromLocation(loc)} 
+                    />
+                    <LocationAutocomplete 
+                      label={activeTab === "ROUND_TRIP" ? "Destinations" : "Drop Location"} 
+                      placeholder="Enter destination address or city..." 
+                      icon="flag" 
+                      onSelect={(loc) => setToLocation(loc)} 
+                    />
+                  </>
                 )}
 
                 {/* Round Trip — return location same so just show a note */}
-                {activeTab === "ROUND_TRIP" && toCityId && (
-                  <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3">
+                {activeTab === "ROUND_TRIP" && (
+                  <div className="md:col-span-2 flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3">
                     <span className="material-symbols-outlined text-primary text-lg">loop</span>
-                    <p className="text-primary text-xs font-medium">Return drop will be at your pickup point</p>
+                    <p className="text-primary text-xs font-medium">Driver will return back to your starting point.</p>
                   </div>
                 )}
 
@@ -254,6 +217,7 @@ export default function HomeClient({ cities, packages }) {
                     min={new Date().toISOString().split("T")[0]}
                     onChange={(e) => setPickupDate(e.target.value)}
                     className={inputClass}
+                    suppressHydrationWarning
                   />
                 </div>
 

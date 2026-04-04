@@ -4,11 +4,14 @@ import { useAdminTheme } from "@/components/AdminThemeProvider";
 import { logout } from "@/app/actions/auth";
 
 const NAV = [
-  { href: "/admin",          label: "Dashboard",  icon: "dashboard" },
-  { href: "/admin/bookings", label: "Bookings",   icon: "receipt_long" },
-  { href: "/admin/cars",     label: "Cars",       icon: "directions_car" },
-  { href: "/admin/pricing",  label: "Pricing",    icon: "currency_rupee" },
-  { href: "/admin/cities",   label: "Cities",     icon: "location_city" },
+  { href: "/admin",            label: "Dashboard",  icon: "dashboard" },
+  { href: "/admin/bookings",   label: "Bookings",   icon: "receipt_long" },
+  { href: "/admin/cars",       label: "Cab Fleet",  icon: "directions_car" },
+  { href: "/admin/self-drive-cars", label: "Self Drive", icon: "car_rental" },
+  { href: "/admin/packages",   label: "Packages",   icon: "timer" },
+  { href: "/admin/pricing",    label: "Rental Prices", icon: "local_activity" },
+  { href: "/admin/cities",     label: "Cities",     icon: "location_city" },
+  { href: "/admin/drivers",    label: "Drivers",    icon: "person_search" },
 ];
 
 export default function AdminSidebar() {

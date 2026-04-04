@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import BookingClient from "@/components/BookingClient";
+import { getUserSession } from "@/app/actions/auth";
 
 export default async function BookingPage({ searchParams }) {
   const p = await searchParams;
-  const { carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId, packageId, pickupDate, pickupTime } = p;
+  const { carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId, packageId, pickupDate, pickupTime, fromName, toName } = p;
+
+  // Authenticate user actively viewing the Checkout Wall
+  const sessionUser = await getUserSession();
 
   // Fetch all details needed for the summary
   const [car, fromCity, toCity, pickupLoc, dropLoc, rentalPkg] = await Promise.all([
@@ -30,9 +34,15 @@ export default async function BookingPage({ searchParams }) {
   const tripData = {
     carId, price: parseFloat(price ?? 0), type,
     fromCityId, toCityId, pickupLocId, dropLocId, packageId,
-    pickupDate, pickupTime,
+    pickupDate, pickupTime, fromName, toName,
     car, fromCity, toCity, pickupLoc, dropLoc, rentalPkg,
+    breakdown: {
+       chargeDistance: parseFloat(p.chargeDistance || 0),
+       baseFare: parseFloat(p.baseFare || 0),
+       nightCharge: parseFloat(p.nightCharge || 0),
+       gstAmount: parseFloat(p.gstAmount || 0)
+    }
   };
 
-  return <BookingClient tripData={tripData} />;
+  return <BookingClient tripData={tripData} initialUser={sessionUser} />;
 }

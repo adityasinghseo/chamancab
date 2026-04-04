@@ -1,26 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateRoutePricing, createRoutePricing, updateRentalPricing, upsertRentalPricing } from "@/app/actions/admin";
+import { updateRentalPricing, upsertRentalPricing } from "@/app/actions/admin";
 
-export default function AdminPricingClient({ cars, cities, initialRoutePricings, initialRentalPricings, packages }) {
-  const [tab, setTab] = useState("ROUTES"); // ROUTES | PACKAGES
+export default function AdminPricingClient({ cars, cities, initialRentalPricings, packages }) {
   const [isTransitioning, startTransition] = useTransition();
-
-  // Selected Route state
-  const [fromCityId, setFromCityId] = useState(cities[0]?.id || "");
-  const [toCityId, setToCityId] = useState(cities[1]?.id || "");
-  const [tripType, setTripType] = useState("ONE_WAY");
 
   // Selected Local Rental state
   const [rentalCityId, setRentalCityId] = useState(cities[0]?.id || "");
   const [selectedPkgId, setSelectedPkgId] = useState(packages[0]?.id || "");
 
   // Filters
-  const currentRoutePricings = initialRoutePricings.filter(
-    (rp) => rp.fromCityId === fromCityId && rp.toCityId === toCityId && rp.tripType === tripType
-  );
-
   const currentRentalPricings = initialRentalPricings.filter(
     (lp) => lp.cityId === rentalCityId && lp.packageId === selectedPkgId
   );
@@ -29,18 +19,10 @@ export default function AdminPricingClient({ cars, cities, initialRoutePricings,
     if (!newPrice || isNaN(newPrice)) return;
     
     startTransition(async () => {
-      if (tab === "ROUTES") {
-        if (pricingId) {
-          await updateRoutePricing(pricingId, newPrice);
-        } else {
-          await createRoutePricing(fromCityId, toCityId, carId, tripType, newPrice);
-        }
+      if (pricingId) {
+        await updateRentalPricing(pricingId, newPrice);
       } else {
-        if (pricingId) {
-          await updateRentalPricing(pricingId, newPrice);
-        } else {
-          await upsertRentalPricing(rentalCityId, selectedPkgId, carId, newPrice);
-        }
+        await upsertRentalPricing(rentalCityId, selectedPkgId, carId, newPrice);
       }
       window.location.reload();
     });
@@ -50,99 +32,34 @@ export default function AdminPricingClient({ cars, cities, initialRoutePricings,
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white">Pricing Matrix</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Configure exact pricing for every route-vehicle combination.</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-gray-200 dark:border-white/10">
-        <button
-          onClick={() => setTab("ROUTES")}
-          className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            tab === "ROUTES" 
-              ? "bg-white dark:bg-surface-dark text-[#181611] dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-white/10"
-              : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">route</span>
-          Intercity Routes
-        </button>
-        <button
-          onClick={() => setTab("PACKAGES")}
-          className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            tab === "PACKAGES" 
-              ? "bg-white dark:bg-surface-dark text-[#181611] dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-white/10"
-              : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">local_activity</span>
-          Local Rentals
-        </button>
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white">Local Rental Pricing</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Manage base rental prices for every Custom City & Package combination.</p>
       </div>
 
       {/* Selector Panels */}
       <div className="bg-white dark:bg-surface-dark border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-        {tab === "ROUTES" ? (
-          <div className="flex flex-wrap items-center gap-4">
-             <div className="flex-1 min-w-[200px]">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">From City</label>
-                <select 
-                  value={fromCityId} 
-                  onChange={(e) => setFromCityId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
-                >
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-             </div>
-             <div className="bg-gray-100 dark:bg-white/5 p-2 rounded-full mt-4 self-center">
-               <span className="material-symbols-outlined text-gray-400">arrow_forward</span>
-             </div>
-             <div className="flex-1 min-w-[200px]">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">To City</label>
-                <select 
-                  value={toCityId} 
-                  onChange={(e) => setToCityId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
-                >
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-             </div>
-             <div className="flex-1 min-w-[200px]">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Trip Type</label>
-                <select 
-                  value={tripType} 
-                  onChange={(e) => setTripType(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
-                >
-                  <option value="ONE_WAY">One Way</option>
-                  <option value="ROUND_TRIP">Round Trip</option>
-                </select>
-             </div>
-          </div>
-        ) : (
           <div className="flex flex-wrap items-center gap-4">
              <div className="flex-1 min-w-[200px]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rental City</label>
                 <select 
                   value={rentalCityId} 
                   onChange={(e) => setRentalCityId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
+                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none text-gray-900 dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold"
                 >
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
              </div>
              <div className="flex-1 min-w-[200px]">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Package</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rental Package</label>
                 <select 
                   value={selectedPkgId} 
                   onChange={(e) => setSelectedPkgId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
+                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none text-gray-900 dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold"
                 >
                   {packages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
              </div>
           </div>
-        )}
       </div>
 
       {/* Pricing Matrix Table */}
@@ -152,14 +69,12 @@ export default function AdminPricingClient({ cars, cities, initialRoutePricings,
               <tr className="bg-gray-50/50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Base Vehicle</th>
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Specifications</th>
-                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Route Price (₹)</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Package Price (₹)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
               {cars.map((car) => {
-                const pricing = tab === "ROUTES" 
-                   ? currentRoutePricings.find(p => p.carId === car.id)
-                   : currentRentalPricings.find(p => p.carId === car.id);
+                const pricing = currentRentalPricings.find(p => p.carId === car.id);
 
                 return (
                   <tr key={car.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
@@ -185,15 +100,15 @@ export default function AdminPricingClient({ cars, cities, initialRoutePricings,
                     </td>
                     <td className="px-6 py-5 text-right">
                        <div className="flex items-center justify-end gap-3">
-                         {!pricing && <span className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest italic animate-pulse">Price not set!</span>}
-                         <div className="relative flex items-center max-w-[120px]">
+                         {!pricing && <span className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest italic animate-pulse">Set Price</span>}
+                         <div className="relative flex items-center max-w-[140px]">
                             <span className="absolute left-3 text-xs font-bold text-gray-400">₹</span>
                             <input
                               type="number"
                               placeholder="0.00"
                               defaultValue={pricing?.price}
                               onBlur={(e) => handleUpdatePrice(car.id, pricing?.id, e.target.value)}
-                              className={`w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl pl-6 pr-4 py-2.5 text-right font-black text-sm outline-none focus:border-primary transition-all ${!pricing ? 'border-yellow-500/50' : ''}`}
+                              className={`w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl pl-6 pr-4 py-2.5 text-right font-black text-gray-900 dark:text-white text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all ${!pricing ? 'border-yellow-500/50' : ''}`}
                             />
                          </div>
                        </div>
@@ -209,7 +124,7 @@ export default function AdminPricingClient({ cars, cities, initialRoutePricings,
          <span className="material-symbols-outlined text-blue-500 mt-1">info</span>
          <div>
            <p className="text-sm font-black text-blue-500 dark:text-blue-400">Auto-save enabled</p>
-           <p className="text-xs text-gray-500 dark:text-gray-400">Changing a value in the input field and clicking outside will automatically save the new price for that specific route and vehicle.</p>
+           <p className="text-xs text-gray-500 dark:text-gray-400">Changing a value in the input field and clicking outside will automatically save the new price for that specific local rental route and vehicle.</p>
          </div>
       </div>
     </div>

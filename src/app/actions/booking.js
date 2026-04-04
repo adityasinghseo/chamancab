@@ -19,6 +19,8 @@ export async function createBooking(formData) {
   const pickupLocId    = formData.get("pickupLocId") || null;
   const dropLocId      = formData.get("dropLocId")   || null;
   const packageId      = formData.get("packageId")   || null;
+  const pickupAddress  = formData.get("fromName") || null;
+  const dropAddress    = formData.get("toName")   || null;
   const pickupDate     = formData.get("pickupDate");
   const pickupTime     = formData.get("pickupTime");
   const amount         = parseFloat(formData.get("amount"));
@@ -35,6 +37,9 @@ export async function createBooking(formData) {
     throw new Error("Missing required booking fields");
   }
 
+  const razorpayPaymentId = formData.get("razorpayPaymentId") || null;
+  const isPaid = paymentMethod === "RAZORPAY" && razorpayPaymentId;
+
   // ── Create booking in DB ────────────────────────────────
   const referenceId = generateReferenceId();
 
@@ -49,13 +54,15 @@ export async function createBooking(formData) {
       toCityId,
       pickupLocationId: pickupLocId,
       dropLocationId:   dropLocId,
+      pickupAddress,
+      dropAddress,
       packageId,
       carId,
       pickupDate: new Date(pickupDate),
       pickupTime,
       amount,
-      status:        "CONFIRMED",
-      paymentStatus: paymentMethod === "PAY_ON_PICKUP" ? "PENDING" : "PENDING",
+      status:        isPaid ? "CONFIRMED" : "CONFIRMED",
+      paymentStatus: isPaid ? "PAID" : "PENDING",
       paymentMethod,
       specialRequests,
     },
@@ -68,7 +75,8 @@ export async function createBooking(formData) {
       bookingId: booking.id,
       method:    paymentMethod,
       amount,
-      status:    paymentMethod === "PAY_ON_PICKUP" ? "PENDING" : "PENDING",
+      status:    isPaid ? "COMPLETED" : "PENDING",
+      razorpayPaymentId: razorpayPaymentId,
     },
   });
 
