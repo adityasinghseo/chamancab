@@ -1,0 +1,91 @@
+export default function Footer() {
+  return (
+    <footer className="bg-[#12100c] pt-16 pb-8 border-t border-white/10 relative overflow-hidden font-display">
+      {/* Decorative background */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          
+          {/* Brand Info */}
+          <div className="lg:col-span-4">
+            <a href="/" className="inline-block mb-6 hover:opacity-90 transition-opacity">
+              <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Tour and Travels" className="h-20 w-auto object-contain" />
+            </a>
+            <p className="text-white/60 text-sm leading-relaxed pr-4 mb-6">
+              <strong className="text-white">Chaman Tour and Travels</strong> offers reliable taxi services in BHEL Jagdishpur and surrounding areas. We are committed to providing safe, comfortable, and timely travel solutions for all your needs.
+            </p>
+            <div className="inline-block bg-white/5 border border-white/10 rounded-lg px-4 py-2">
+              <p className="text-primary text-xs font-bold tracking-widest uppercase mb-1">GST Number</p>
+              <p className="text-white font-mono text-sm tracking-widest">09COVPK1632M1ZA</p>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="lg:col-span-3 lg:col-start-6">
+            <h3 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Services</h3>
+            <ul className="space-y-4">
+              <li><a href="/" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> One Way & Round Trip</a></li>
+              <li><a href="/" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Local Rental</a></li>
+              <li><a href="/self-drive" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Self Drive Cars</a></li>
+              <li><a href="/hire-driver" className="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[16px]">arrow_right</span> Hire Driver</a></li>
+            </ul>
+          </div>
+
+          {/* Contact & Address */}
+          <div className="lg:col-span-4">
+            <h3 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Contact Support</h3>
+            <div className="space-y-5">
+              <a href="https://wa.me/916386499107" target="_blank" rel="noopener noreferrer" className="flex items-start gap-4 group">
+                <div className="bg-[#25D366]/10 p-3 rounded-xl border border-[#25D366]/20 group-hover:bg-[#25D366]/20 transition-colors">
+                  <span className="material-symbols-outlined text-[#25D366]">chat</span>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">WhatsApp Bookings</p>
+                  <p className="text-white font-medium group-hover:text-[#25D366] transition-colors">+91 6386499107</p>
+                </div>
+              </a>
+
+              <a href="tel:+916386499107" className="flex items-start gap-4 group">
+                <div className="bg-primary/10 p-3 rounded-xl border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                  <span className="material-symbols-outlined text-primary">call</span>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Call Support</p>
+                  <p className="text-white font-medium group-hover:text-primary transition-colors">+91 6386499107</p>
+                </div>
+              </a>
+
+              <div className="flex items-start gap-4 pt-2">
+                <div className="bg-white/5 p-3 rounded-xl border border-white/10 mt-1">
+                  <span className="material-symbols-outlined text-white/70">location_on</span>
+                </div>
+                <div>
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-2">Our Locations</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-white/80"><span className="text-primary font-semibold">Head Office:</span> Lucknow</p>
+                    <p className="text-sm text-white/80 leading-relaxed"><span className="text-primary font-semibold">Branch Offices:</span> Jagdishpur, Amethi, Raebareli, Ayodhya, Barabanki, Sultanpur</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+
+        {/* Copyright */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-white/40 text-xs font-medium">
+            © {new Date().getFullYear()} Chaman Tour and Travels. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6">
+            <a href="/admin" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Admin Portal</a>
+            <a href="#" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Privacy Policy</a>
+            <a href="#" className="text-white/40 hover:text-white transition-colors text-xs font-medium">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

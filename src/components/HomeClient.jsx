@@ -9,6 +9,7 @@ const tabConfig = [
 ];
 
 import LocationAutocomplete from "./LocationAutocomplete";
+import Footer from "./Footer";
 
 export default function HomeClient({ cities, packages }) {
   const router = useRouter();
@@ -271,6 +272,7 @@ export default function HomeClient({ cities, packages }) {
           ))}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
