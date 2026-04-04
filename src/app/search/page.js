@@ -102,12 +102,9 @@ export default async function SearchPage({ searchParams }) {
           <a href="/" className="flex items-center gap-2 text-white hover:text-primary transition-colors mr-4">
             <span className="material-symbols-outlined">arrow_back</span>
           </a>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-1.5">
-              <span className="material-symbols-outlined text-[#181611] text-xl">local_taxi</span>
-            </div>
-            <span className="text-white font-bold">Chaman Cab</span>
-          </div>
+          <a href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+          </a>
         </div>
       </header>
 

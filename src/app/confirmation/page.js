@@ -67,11 +67,10 @@ export default async function ConfirmationPage({ searchParams }) {
     <div className="min-h-screen bg-[#181611] font-display">
       {/* Header */}
       <header className="bg-[#1e1a0e] border-b border-white/10 px-4 py-4">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <div className="bg-primary rounded-lg p-1.5">
-            <span className="material-symbols-outlined text-[#181611] text-xl">local_taxi</span>
-          </div>
-          <span className="text-white font-bold">Chaman Cab</span>
+        <div className="max-w-3xl mx-auto flex items-center">
+          <a href="/" className="flex items-center hover:opacity-90 transition-opacity">
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+          </a>
         </div>
       </header>
 

@@ -27,13 +27,7 @@ export default function AdminSidebar() {
       <div>
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-white/10">
-          <div className="bg-[#1a1a0a] dark:bg-primary/20 p-2 rounded-xl flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary text-2xl">local_taxi</span>
-          </div>
-          <div>
-            <h1 className="text-base font-black text-gray-900 dark:text-white leading-none">Chaman Cab</h1>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Admin Portal</p>
-          </div>
+          <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
         </div>
 
         {/* Nav */}

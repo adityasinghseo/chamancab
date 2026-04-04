@@ -76,15 +76,9 @@ export default function HomeClient({ cities, packages }) {
         <div className="relative max-w-6xl mx-auto px-4 pt-8 pb-6">
           {/* Logo / Nav */}
           <nav className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary rounded-xl p-2">
-                <span className="material-symbols-outlined text-[#181611] text-2xl">local_taxi</span>
-              </div>
-              <div>
-                <h1 className="text-white text-xl font-black tracking-tight">Chaman Cab</h1>
-                <p className="text-primary text-[10px] font-bold uppercase tracking-widest">Reliable Cab Service</p>
-              </div>
-            </div>
+            <a href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+              <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-12 md:h-14 w-auto object-contain" />
+            </a>
             <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-bold tracking-wide">
               <a href="/self-drive" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">car_rental</span> Self Drive Cars</a>
               <a href="/hire-driver" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">person_search</span> Hire Driver</a>

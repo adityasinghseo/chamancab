@@ -26,9 +26,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px] bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
         <div className="p-10">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-[#1a1a0a] rounded-2xl flex items-center justify-center mb-4 transition-transform hover:scale-110 duration-500">
-               <span className="material-symbols-outlined text-primary text-4xl">local_taxi</span>
-            </div>
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-16 w-auto object-contain mb-4" />
             <h1 className="text-2xl font-black text-gray-900 leading-tight uppercase tracking-widest">Admin Portal</h1>
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Chaman Cab Management</p>
           </div>

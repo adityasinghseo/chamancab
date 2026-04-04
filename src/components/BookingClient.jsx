@@ -183,12 +183,9 @@ export default function BookingClient({ tripData, initialUser }) {
           <a href="/search" className="p-2 text-white/60 hover:text-white transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
           </a>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-1.5">
-              <span className="material-symbols-outlined text-[#181611] text-xl">local_taxi</span>
-            </div>
-            <span className="text-white font-bold">Chaman Cab</span>
-          </div>
+          <a href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+          </a>
           {/* Step indicator */}
           <div className="ml-auto hidden sm:flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1.5 text-primary font-bold">
