@@ -351,3 +351,37 @@ model DriverBooking {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────
+// OFFERS (Return Trip / Special Deals)
+// ─────────────────────────────────────────────
+model Offer {
+  id            String   @id @default(cuid())
+  fromCity      String
+  toCity        String
+  date          String   // display date e.g. "5 April 2026"
+  time          String   // departure time e.g. "3:30 PM"
+  price         Int      // discounted offer price
+  originalPrice Int      // original price (for strikethrough)
+  seatsAvailable Int     @default(1)
+  validUntil    DateTime // auto-expire after this
+  isActive      Boolean  @default(true)
+  description   String?  // e.g. "Return trip - limited seats"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  bookings      OfferBooking[]
+}
+
+model OfferBooking {
+  id            String   @id @default(cuid())
+  offer         Offer    @relation(fields: [offerId], references: [id])
+  offerId       String
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  seatsBooked   Int      @default(1)
+  status        String   @default("PENDING")
+  paymentStatus String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

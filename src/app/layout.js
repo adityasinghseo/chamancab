@@ -1,4 +1,5 @@
 import "./globals.css";
+import OfferPopup from "@/components/OfferPopup";
 
 export const metadata = {
   title: "Chaman Cab - Reliable Taxi Services in India",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
         {children}
+        <OfferPopup />
       </body>
     </html>
   );

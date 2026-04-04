@@ -6,6 +6,7 @@ import { logout } from "@/app/actions/auth";
 const NAV = [
   { href: "/admin",            label: "Dashboard",  icon: "dashboard" },
   { href: "/admin/bookings",   label: "Bookings",   icon: "receipt_long" },
+  { href: "/admin/offers",     label: "Offers",     icon: "local_offer" },
   { href: "/admin/cars",       label: "Cab Fleet",  icon: "directions_car" },
   { href: "/admin/self-drive-cars", label: "Self Drive", icon: "car_rental" },
   { href: "/admin/packages",   label: "Packages",   icon: "timer" },
