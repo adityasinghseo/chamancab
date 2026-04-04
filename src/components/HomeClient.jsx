@@ -10,6 +10,7 @@ const tabConfig = [
 
 import LocationAutocomplete from "./LocationAutocomplete";
 import Footer from "./Footer";
+import Header from "./Header";
 
 export default function HomeClient({ cities, packages }) {
   const router = useRouter();
@@ -68,6 +69,7 @@ export default function HomeClient({ cities, packages }) {
 
   return (
     <div className="min-h-screen bg-[#181611] font-display">
+      <Header activePage="" />
       {/* ── HERO SECTION ── */}
       <div className="relative overflow-hidden">
         {/* Background gradient */}
@@ -75,21 +77,6 @@ export default function HomeClient({ cities, packages }) {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f2b90d' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
 
         <div className="relative max-w-6xl mx-auto px-4 pt-8 pb-6">
-          {/* Logo / Nav */}
-          <nav className="flex items-center justify-between mb-12">
-            <a href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-20 md:h-28 w-auto object-contain" />
-            </a>
-            <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-bold tracking-wide">
-              <a href="/self-drive" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">car_rental</span> Self Drive Cars</a>
-              <a href="/hire-driver" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">person_search</span> Hire Driver</a>
-              <a href="/admin" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">admin_panel_settings</span> Admin</a>
-              <a href="tel:+919876543210" className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-5 py-2.5 rounded-full transition-colors ml-2">
-                <span className="material-symbols-outlined text-lg">call</span>
-                Call Now
-              </a>
-            </div>
-          </nav>
 
           {/* Hero text */}
           <div className="text-center mb-10">
