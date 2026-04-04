@@ -27,7 +27,7 @@ export default function AdminSidebar() {
       <div>
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-white/10">
-          <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+          <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-16 md:h-20 w-auto object-contain" />
         </div>
 
         {/* Nav */}

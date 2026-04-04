@@ -103,7 +103,7 @@ export default async function SearchPage({ searchParams }) {
             <span className="material-symbols-outlined">arrow_back</span>
           </a>
           <a href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-14 md:h-20 w-auto object-contain -ml-2" />
           </a>
         </div>
       </header>

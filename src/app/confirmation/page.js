@@ -69,7 +69,7 @@ export default async function ConfirmationPage({ searchParams }) {
       <header className="bg-[#1e1a0e] border-b border-white/10 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center">
           <a href="/" className="flex items-center hover:opacity-90 transition-opacity">
-            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-14 md:h-20 w-auto object-contain -ml-2" />
           </a>
         </div>
       </header>

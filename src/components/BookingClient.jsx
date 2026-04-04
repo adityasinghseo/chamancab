@@ -184,7 +184,7 @@ export default function BookingClient({ tripData, initialUser }) {
             <span className="material-symbols-outlined">arrow_back</span>
           </a>
           <a href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-8 w-auto object-contain" />
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-14 md:h-20 w-auto object-contain -ml-2" />
           </a>
           {/* Step indicator */}
           <div className="ml-auto hidden sm:flex items-center gap-2 text-xs">

@@ -77,7 +77,7 @@ export default function HomeClient({ cities, packages }) {
           {/* Logo / Nav */}
           <nav className="flex items-center justify-between mb-12">
             <a href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-12 md:h-14 w-auto object-contain" />
+              <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-20 md:h-28 w-auto object-contain" />
             </a>
             <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-bold tracking-wide">
               <a href="/self-drive" className="hover:text-primary transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">car_rental</span> Self Drive Cars</a>
