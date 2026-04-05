@@ -6,14 +6,32 @@ Any time the rate cards or the terms need updating, please reference this cheat 
 
 ## 1. Current Rate Card (Per KM)
 
-The system calculates base prices by multiplying the final billed distance by these specific rates:
+There are two separate rate cards based on the trip type.
+
+### A. One-Way Rate Card
+
+Used for simple one-way calculations. Exact map distance is multiplied by this rate.
+Note: "Xcent" is branded as Aura.
+
+| Car Type                | Rate (₹ / km) | DB ID String             |
+| ----------------------- | ------------- | ------------------------ |
+| WagonR CNG              | ₹19           | `car_wagonr_cng`         |
+| Dzire CNG               | ₹21           | `car_dzire_cng`          |
+| Swift Dzire (Petrol)    | ₹24           | `car_dzire_petrol`       |
+| Xcent (Aura)            | ₹24           | `car_xcent`              |
+| Bolero                  | ₹31           | `car_bolero`             |
+| Ertiga                  | ₹33           | `car_ertiga`             |
+| Scorpio                 | ₹42           | `car_scorpio`            |
+| Innova Crysta           | ₹53           | `car_innova_crysta`      |
+
+### B. Round Trip Rate Card
 
 | Car Type                | Rate (₹ / km) | DB ID String             |
 | ----------------------- | ------------- | ------------------------ |
 | WagonR CNG              | ₹10           | `car_wagonr_cng`         |
 | Dzire CNG               | ₹11           | `car_dzire_cng`          |
 | Swift Dzire (Petrol)    | ₹12           | `car_dzire_petrol`       |
-| Xcent                   | ₹12           | `car_xcent`              |
+| Xcent (Aura)            | ₹12           | `car_xcent`              |
 | Bolero                  | ₹13           | `car_bolero`             |
 | Ertiga                  | ₹14           | `car_ertiga`             |
 | Scorpio                 | ₹17           | `car_scorpio`            |
@@ -24,22 +42,22 @@ The system calculates base prices by multiplying the final billed distance by th
 ## 2. Distance Computation Rules
 
 All map distances are strictly derived via OpenStreetMap OSRM routing matrices natively.
-Once the physical distance is received, the pricing engine applies strict outstation limits to determine the **Billed Charge Distance**.
 
 ### A. One-Way Trips
-- **Rule:** There is a strict minimum billable limit of **250 KM** for outstation one-way trips.
-- **Math:** `chargeDistance = Math.max(actual_one_way_km, 250)`
-- **Example:** A 140 KM trip from Lucknow to Jagdishpur will be billed as exactly 250 KM.
+- **Rule:** Simple direct calculation. No minimum floors, no fixed routes.
+- **Math:** `fare = exact_distance_km * oneway_rate`
+- **Example:** An 84.6 KM trip in a WagonR will cost: 84.6 * 19 = ₹1607.4. After rounding to 100, final payable is `₹1600`.
+- **Note:** Tolls, parking, GST, and night charges are NOT applied on top of this basic one-way fare currently; it's a flat point-to-point calculation.
 
 ### B. Round Trips
-- **Rule:** Round trips require you to multiply the basic one-way distance by 2.
+- **Rule 1:** Round trips require you to multiply the basic one-way distance by 2.
 - **Rule 2:** There is a baseline minimum limit of **250 KM per active day**. (Currently defaults to 1 day).
 - **Math:** `chargeDistance = Math.max(actual_one_way_km * 2, 250 * number_of_days)`
 - **Example:** A 100 KM one-way creates a 200 KM round physical trip. Because it falls under 250, the user will be billed for exactly 250 KM.
 
 ---
 
-## 3. Added Adjustments & Tolls
+## 3. Added Adjustments & Tolls (Currently applies to Round Trips)
 
 After calculating the Base Fare (`chargeDistance * Rate`), the system layers on any necessary conditional factors.
 
@@ -61,13 +79,13 @@ After calculating the Base Fare (`chargeDistance * Rate`), the system layers on 
 ---
 
 ## 4. End-to-End Example Trace (Backend Logic)
-**Scenario:** Swift Dzire Petrol (₹12/km), 138 KM physical one-way map distance, 11:30 PM Pickup.
+**Scenario (Round trip):** Swift Dzire Petrol (₹12/km), 138 KM physical one-way map distance, 11:30 PM Pickup.
 
-1. **Check Condition:** ONE_WAY Trip.
-2. **Apply Floor:** 138 KM is less than 250 KM. Billed Distance = `250 KM`.
-3. **Base Computation:** 250 KM * ₹12 = `₹3,000`.
+1. **Check Condition:** ROUND_TRIP.
+2. **Calculate Distance:** 138 * 2 = 276. 276 > 250 limit. Billed Distance = `276 KM`.
+3. **Base Computation:** 276 KM * ₹12 = `₹3,312`.
 4. **Night Allowance:** Pickup is at 23:30 (Between 10PM-6AM). Add `₹300`.
-5. **Subtotal:** `₹3,300`.
-6. **GST:** 5% of ₹3,300 = `₹165`.
-7. **Exact Total:** `₹3,465`.
-8. **Rounding:** Nearest integer hundred of 3,465 -> `₹3,500 Final Payable Amount`.
+5. **Subtotal:** `₹3,612`.
+6. **GST:** 5% of ₹3,612 = `₹180.60`.
+7. **Exact Total:** `₹3,792.60`.
+8. **Rounding:** Nearest integer hundred of 3792.60 -> `₹3,800 Final Payable Amount`.
