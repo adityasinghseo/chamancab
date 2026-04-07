@@ -28,6 +28,7 @@ export default function BookingClient({ tripData, initialUser }) {
   const [isPending, startTransition] = useTransition();
   const [isPaying, setIsPaying] = useState(false);
   const [errors, setErrors] = useState({});
+  const [wantsGst, setWantsGst] = useState(false);
 
   // Auth State
   const [user, setUser] = useState(initialUser);
@@ -73,10 +74,17 @@ export default function BookingClient({ tripData, initialUser }) {
   }
 
   // Price breakdown
-  const basePrice    = tripData.breakdown?.baseFare || price || 0;
-  const driverFee    = 0;   
-  const totalAmount  = (tripData.breakdown?.totalPayable || basePrice);
+  const basePrice = tripData.breakdown?.baseFare || price || 0;
+  // 'price' comes directly from URL which contains the fully rounded correct base total
+  let calculatedTotal = price || basePrice;
+  let dynamicGst = tripData.breakdown?.gstAmount || 0;
 
+  if (type === "ONE_WAY" && wantsGst) {
+    dynamicGst = Math.round(calculatedTotal * 0.05);
+    calculatedTotal += dynamicGst;
+  }
+
+  const totalAmount = Math.round(calculatedTotal);
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -388,6 +396,25 @@ export default function BookingClient({ tripData, initialUser }) {
                       className={`${inputClass} resize-none`}
                     />
                   </div>
+
+                  {/* GST Bill Optional (One Way) */}
+                  {type === "ONE_WAY" && (
+                    <div className="sm:col-span-2 mt-2">
+                       <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl">
+                          <input
+                            type="checkbox"
+                            checked={wantsGst}
+                            onChange={(e) => setWantsGst(e.target.checked)}
+                            className="w-5 h-5 accent-primary rounded cursor-pointer"
+                          />
+                          <div className="flex-1">
+                             <p className="text-white font-bold text-sm">Need a GST Bill?</p>
+                             <p className="text-white/50 text-xs mt-0.5">Check this box to automatically add 5% GST to your total amount.</p>
+                          </div>
+                       </label>
+                    </div>
+                  )}
+
                 </div>
               </div>
 
@@ -600,7 +627,7 @@ export default function BookingClient({ tripData, initialUser }) {
 
                   <div className="flex justify-between text-white/80">
                     <span>Base Fare</span>
-                    <span className="font-semibold">₹{(tripData.breakdown?.baseFare || basePrice).toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">₹{Math.round(basePrice).toLocaleString("en-IN")}</span>
                   </div>
 
                   {tripData.breakdown?.nightCharge > 0 && (
@@ -615,7 +642,7 @@ export default function BookingClient({ tripData, initialUser }) {
 
                   <div className="flex justify-between text-white/70">
                     <span>GST (5%)</span>
-                    <span>+ ₹{(tripData.breakdown?.gstAmount || 0).toLocaleString("en-IN")}</span>
+                    <span>+ ₹{dynamicGst.toLocaleString("en-IN")}</span>
                   </div>
 
                   <div className="flex justify-between text-green-400 text-xs pt-1">
@@ -629,13 +656,25 @@ export default function BookingClient({ tripData, initialUser }) {
                   <div className="border-t border-white/10 pt-3 flex justify-between items-center">
                     <span className="text-white font-bold">Total Payable</span>
                     <span className="text-primary font-black text-2xl">
-                      ₹{totalAmount.toLocaleString("en-IN")}
+                      ₹{Math.round(totalAmount).toLocaleString("en-IN")}
                     </span>
                   </div>
                   
-                  <div className="mt-4 pt-3 border-t border-white/10 flex items-start gap-2 text-[11px] text-white/40 leading-relaxed">
-                      <span className="material-symbols-outlined text-primary/50 text-[14px]">info</span>
-                      <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 250 KM charged for outstation. Time & distance calculated garage to garage.</p>
+                  <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-3 text-[11px] text-white/50 leading-relaxed font-medium">
+                      <span className="material-symbols-outlined text-primary/70 text-[18px]">info</span>
+                      <div className="space-y-1.5 flex-1">
+                         {type === "ONE_WAY" ? (
+                           <>
+                             <p className="text-green-400 font-bold">• 1 Toll Tax is completely FREE for this One-Way trip.</p>
+                             <p>• If you don't come within 10 minutes after the vehicle arrives, waiting charges will start.</p>
+                             <p>• Airport Parking and Other Parking charges are not included.</p>
+                             <p className="text-amber-400/80">• Driver Allowance (DA) Rs. 300 will be charged after 10:00 PM & before 6:00 AM.</p>
+                             <p>• Any additional Interstate charges (if applicable) are extra and to be paid as actuals.</p>
+                           </>
+                         ) : (
+                           <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 250 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
+                         )}
+                      </div>
                   </div>
                 </div>
               </div>

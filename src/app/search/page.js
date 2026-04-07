@@ -248,10 +248,12 @@ export default async function SearchPage({ searchParams }) {
                             <p className="text-white/30 text-[10px] mt-0.5">10 PM - 6 AM</p>
                           </div>
                         )}
-                        <div>
-                          <p className="text-white/40 mb-1">GST (5%)</p>
-                          <p className="text-white font-bold">+₹{breakdown.gstAmount.toLocaleString("en-IN")}</p>
-                        </div>
+                        {breakdown.gstAmount !== undefined && (
+                          <div>
+                            <p className="text-white/40 mb-1">GST (5%)</p>
+                            <p className="text-white font-bold">+₹{breakdown.gstAmount.toLocaleString("en-IN")}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                     
