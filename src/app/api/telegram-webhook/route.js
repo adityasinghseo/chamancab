@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req) {
   try {
@@ -67,6 +68,9 @@ export async function POST(req) {
                   parse_mode: 'HTML'
               })
          });
+
+         // 4. Force Next.js to clear cache for the admin dashboard
+         revalidatePath("/admin", "layout");
       }
     }
 

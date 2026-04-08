@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // Status badge colors
 function StatusBadge({ status }) {
   const map = {
