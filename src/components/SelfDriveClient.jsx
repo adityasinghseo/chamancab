@@ -60,8 +60,17 @@ export default function SelfDriveClient({ cars }) {
       alert("Enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9)");
       return;
     }
-    
-    if (session) {
+
+    // Only skip OTP if session phone EXACTLY matches the entered phone
+    const enteredPhone = phone.replace(/\D/g, "");
+    const sessionPhone = session?.phone?.replace(/\D/g, "");
+    const phoneMatchesSession = session && sessionPhone && (
+      sessionPhone === enteredPhone ||
+      sessionPhone === `91${enteredPhone}` ||
+      `91${sessionPhone}` === enteredPhone
+    );
+
+    if (phoneMatchesSession) {
        processSelfDriveBooking(fd);
        return;
     }

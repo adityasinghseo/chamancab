@@ -91,21 +91,28 @@ export default function BookingClient({ tripData, initialUser }) {
     const errs = validate(fd);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
-    
-    // Inject secure user ID into formData for backend tracking
-    if (user?.id) fd.append("userId", user.id);
 
-    if (user) {
+    // Trigger OTP Flow
+    const enteredPhone = fd.get("customerPhone")?.replace(/\D/g, "");
+
+    // Only skip OTP if the user is already verified AND the phone matches their session
+    const sessionPhone = user?.phone?.replace(/\D/g, "");
+    const phoneMatchesSession = user && sessionPhone && (
+      sessionPhone === enteredPhone ||
+      sessionPhone === `91${enteredPhone}` ||
+      `91${sessionPhone}` === enteredPhone
+    );
+
+    if (phoneMatchesSession) {
+      fd.append("userId", user.id);
       processBooking(fd);
       return;
     }
 
-    // Trigger OTP Flow
-    const phone = fd.get("customerPhone");
     setPendingFormData(fd);
-    setIsPaying(true); // Use isPaying as a general loading state for the button
+    setIsPaying(true);
     
-    const res = await sendLoginOtp(phone);
+    const res = await sendLoginOtp(enteredPhone);
     setIsPaying(false);
 
     if (res?.error) {
