@@ -137,7 +137,7 @@ export async function submitSelfDriveBooking(formData) {
 <b>Amount:</b> ₹${est.charge.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit
   `.trim();
 
-  await sendTelegramNotification(message);
+  await sendTelegramNotification(message, referenceId);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

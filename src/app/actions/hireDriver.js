@@ -75,7 +75,7 @@ export async function submitDriverBooking(formData) {
 <b>Amount:</b> ₹${amount.toLocaleString('en-IN')}
   `.trim();
 
-  await sendTelegramNotification(message);
+  await sendTelegramNotification(message, referenceId);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

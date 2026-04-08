@@ -99,7 +99,7 @@ export async function createBooking(formData) {
 <b>Amount:</b> ₹${amount.toLocaleString('en-IN')} (${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Paid Online"})
   `.trim();
 
-  await sendTelegramNotification(message);
+  await sendTelegramNotification(message, referenceId);
 
   // ── Redirect to confirmation ─────────────────────────────
   redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
