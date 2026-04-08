@@ -78,30 +78,59 @@ export async function getSession() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// USER LOGIN VIA OTP (FAST2SMS)
+// USER LOGIN VIA OTP (SMS INDIA HUB)
 // ─────────────────────────────────────────────────────────────
+
+// Generates a 4-digit random OTP
+function generateOTP() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
 
 export async function sendLoginOtp(phone) {
   if (!phone || phone.length < 10) {
     return { error: "Invalid phone number." };
   }
 
-  // DUMMY OTP MODE IS ACTIVE AS REQUESTED
+  const cleanPhone = phone.replace(/\D/g, "");
+  const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
   try {
-    const code = "1111"; // Hardcoded OTP
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+    const code = generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    // Clear previous OTPs
+    await prisma.otp.deleteMany({ where: { phone: formattedPhone } });
 
     await prisma.otp.create({
-      data: { phone, code, expiresAt },
+      data: { phone: formattedPhone, code, expiresAt },
     });
 
-    // Bypass Fast2SMS entirely for now until API approved.
-    console.log(`[AUTH] Dummy OTP 1111 generated for ${phone}`);
+    const textToMatchDLT = `Welcome to the Chamancab.com powered by SMSINDIAHUB. Your OTP for registration is ${code}`;
+    const apiKey = "XM6YRLPJck6zJSxot6mZMg";
+
+    const url = new URL("https://cloud.smsindiahub.in/api/mt/SendSMS");
+    url.searchParams.append("APIKey", apiKey);
+    url.searchParams.append("senderid", "SMSHUB");
+    url.searchParams.append("channel", "Trans");
+    url.searchParams.append("DCS", "0");
+    url.searchParams.append("flashsms", "0");
+    url.searchParams.append("number", formattedPhone);
+    url.searchParams.append("text", textToMatchDLT);
+    url.searchParams.append("DLTTemplateId", "1007801291964877107");
+    url.searchParams.append("route", "0");
+    url.searchParams.append("PEId", "1701158019630577568");
+
+    const response = await fetch(url.toString(), { method: "GET" });
     
-    return { success: true, message: "Testing Mode: Enter 1111" };
+    if (response.ok) {
+      return { success: true, message: "OTP sent successfully via SMS India Hub." };
+    } else {
+      console.error("SMS API Error with status:", response.status);
+      return { error: "Failed to send SMS via provider." };
+    }
   } catch (error) {
     console.error("sendLoginOtp error:", error);
-    return { error: "Database error while preparing OTP." };
+    return { error: "Network error while connecting to SMS provider." };
   }
 }
 
@@ -110,32 +139,30 @@ export async function verifyLoginOtp(phone, code) {
     return { error: "Phone and OTP are required." };
   }
 
-  try {
-    // Universal Dummy Master Code for Rapid Testing
-    if (code !== "1111") {
-      // Validate OTP
-      const otpRecord = await prisma.otp.findFirst({
-        where: { phone, code, expiresAt: { gt: new Date() } },
-        orderBy: { createdAt: "desc" },
-      });
+  const cleanPhone = phone.replace(/\D/g, "");
+  const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
 
-      if (!otpRecord) {
-        return { error: "Invalid or expired OTP." };
-      }
+  try {
+    // Validate OTP
+    const otpRecord = await prisma.otp.findFirst({
+      where: { phone: formattedPhone, code: code.trim(), expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!otpRecord) {
+      return { error: "Invalid or expired OTP." };
     }
 
     // Register or find user
-    let user = await prisma.user.findUnique({ where: { phone } });
+    let user = await prisma.user.findUnique({ where: { phone: formattedPhone } });
     if (!user) {
-      user = await prisma.user.create({ data: { phone } });
+      user = await prisma.user.create({ data: { phone: formattedPhone } });
     }
 
     // Destroy OTP so it's strictly single-use
-    if (code !== "1111") {
-      await prisma.otp.deleteMany({ where: { phone } });
-    }
+    await prisma.otp.deleteMany({ where: { phone: formattedPhone } });
 
-    // Store simple secure cookie session (matches admin auth pattern)
+    // Store simple secure cookie session
     const cookieStore = await cookies();
     cookieStore.set("chamancab_user_session", user.id, {
       httpOnly: true,

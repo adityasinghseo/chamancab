@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { getUserSession } from "@/app/actions/auth";
+import { getUserSession, sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
 import { submitSelfDriveBooking } from "@/app/actions/selfDrive";
 
 function getCarImage(carName) {
@@ -22,6 +22,12 @@ export default function SelfDriveClient({ cars }) {
   const [selectedCar, setSelectedCar] = useState(null);
   const [session, setSession] = useState(null);
   const [isPending, startTransition] = useTransition();
+
+  // OTP State
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState(["", "", "", ""]);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState(null);
 
   // Booking Form State
   const [pickupDate, setPickupDate] = useState("");
@@ -55,12 +61,50 @@ export default function SelfDriveClient({ cars }) {
       return;
     }
     
+    if (session) {
+       processSelfDriveBooking(fd);
+       return;
+    }
+
+    setPendingFormData(fd);
+    
+    const res = await sendLoginOtp(phone);
+    if (res?.error) {
+       alert(res.error);
+       return;
+    }
+
+    setOtpCode(["", "", "", ""]);
+    setShowOtp(true);
+  };
+
+  const processSelfDriveBooking = (fd) => {
     startTransition(async () => {
       fd.append("carId", selectedCar.id);
+      if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
       const res = await submitSelfDriveBooking(fd);
       if (res.error) alert(res.error);
       else setBookingSuccess(res.referenceId);
     });
+  };
+
+  const handleVerifyOtp = async () => {
+     const code = otpCode.join("");
+     if(code.length !== 4) return alert("Please enter the 4-digit OTP");
+
+     setVerifyingOtp(true);
+     const phone = pendingFormData.get("customerPhone");
+     const res = await verifyLoginOtp(phone, code);
+     setVerifyingOtp(false);
+
+     if (res?.error) {
+        return alert(res.error);
+     }
+
+     pendingFormData.append("userId", res.user.id);
+     setSession(res.user);
+     setShowOtp(false);
+     processSelfDriveBooking(pendingFormData);
   };
 
   return (
@@ -242,6 +286,62 @@ export default function SelfDriveClient({ cars }) {
                 )}
               </div>
            </div>
+        </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {showOtp && (
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1a0e] border border-white/10 rounded-2xl p-6 w-full max-w-sm relative">
+            <button type="button" onClick={() => setShowOtp(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+                <span className="material-symbols-outlined text-3xl">sms</span>
+              </div>
+              <h3 className="text-white font-black text-xl mb-1">Verify Mobile</h3>
+              <p className="text-white/50 text-sm">Enter the 4-digit code sent to +91 {pendingFormData?.get("customerPhone")}</p>
+            </div>
+            
+            <div className="flex justify-between gap-3 mb-6">
+              {[0, 1, 2, 3].map((idx) => (
+                <input
+                  key={idx}
+                  id={`self-otp-input-${idx}`}
+                  type="text"
+                  maxLength={1}
+                  value={otpCode[idx]}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/, '');
+                    const newOtp = [...otpCode];
+                    newOtp[idx] = val;
+                    setOtpCode(newOtp);
+                    if (val && idx < 3) {
+                      document.getElementById(`self-otp-input-${idx + 1}`).focus();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && !otpCode[idx] && idx > 0) {
+                      document.getElementById(`self-otp-input-${idx - 1}`).focus();
+                    } else if (e.key === "Enter") {
+                      if (idx === 3 && otpCode[3]) handleVerifyOtp();
+                    }
+                  }}
+                  className="w-14 h-14 bg-white/5 border border-white/15 rounded-xl text-center text-white text-2xl font-black focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              ))}
+            </div>
+
+            <button
+               type="button"
+               onClick={handleVerifyOtp}
+               disabled={verifyingOtp}
+               className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 text-[#181611] font-black py-4 rounded-xl transition-all"
+            >
+               {verifyingOtp ? "Verifying..." : "Verify & Book Now"}
+            </button>
+          </div>
         </div>
       )}
     </div>

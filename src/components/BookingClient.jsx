@@ -45,6 +45,11 @@ export default function BookingClient({ tripData, initialUser }) {
 
   const [user, setUser] = useState(initialUser);
 
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState(["", "", "", ""]);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState(null);
+
   const inputClass =
     "w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm";
   const labelClass = "block text-white/70 text-xs font-semibold uppercase tracking-wider mb-1.5";
@@ -90,11 +95,54 @@ export default function BookingClient({ tripData, initialUser }) {
     // Inject secure user ID into formData for backend tracking
     if (user?.id) fd.append("userId", user.id);
 
+    if (user) {
+      processBooking(fd);
+      return;
+    }
+
+    // Trigger OTP Flow
+    const phone = fd.get("customerPhone");
+    setPendingFormData(fd);
+    setIsPaying(true); // Use isPaying as a general loading state for the button
+    
+    const res = await sendLoginOtp(phone);
+    setIsPaying(false);
+
+    if (res?.error) {
+       alert(res.error);
+       return;
+    }
+
+    setOtpCode(["", "", "", ""]);
+    setShowOtp(true);
+  }
+
+  function processBooking(fd) {
     if (paymentMethod === "PAY_ON_PICKUP") {
       startTransition(() => { createBooking(fd); });
     } else if (paymentMethod === "RAZORPAY") {
       handleRazorpayPayment(fd);
     }
+  }
+
+  async function handleVerifyOtp() {
+     const code = otpCode.join("");
+     if(code.length !== 4) return alert("Please enter the 4-digit OTP");
+
+     setVerifyingOtp(true);
+     const phone = pendingFormData.get("customerPhone");
+     const res = await verifyLoginOtp(phone, code);
+     setVerifyingOtp(false);
+
+     if (res?.error) {
+        return alert(res.error);
+     }
+
+     // Success!
+     pendingFormData.append("userId", res.user.id);
+     setUser(res.user);
+     setShowOtp(false);
+     processBooking(pendingFormData);
   }
 
   async function handleRazorpayPayment(fd) {
@@ -589,6 +637,63 @@ export default function BookingClient({ tripData, initialUser }) {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      {showOtp && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1a0e] border border-white/10 rounded-2xl p-6 w-full max-w-sm relative">
+            <button type="button" onClick={() => setShowOtp(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+                <span className="material-symbols-outlined text-3xl">sms</span>
+              </div>
+              <h3 className="text-white font-black text-xl mb-1">Verify Mobile</h3>
+              <p className="text-white/50 text-sm">Enter the 4-digit code sent to +91 {pendingFormData?.get("customerPhone")}</p>
+            </div>
+            
+            <div className="flex justify-between gap-3 mb-6">
+              {[0, 1, 2, 3].map((idx) => (
+                <input
+                  key={idx}
+                  id={`otp-input-${idx}`}
+                  type="text"
+                  maxLength={1}
+                  value={otpCode[idx]}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/, '');
+                    const newOtp = [...otpCode];
+                    newOtp[idx] = val;
+                    setOtpCode(newOtp);
+                    if (val && idx < 3) {
+                      document.getElementById(`otp-input-${idx + 1}`).focus();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && !otpCode[idx] && idx > 0) {
+                      document.getElementById(`otp-input-${idx - 1}`).focus();
+                    } else if (e.key === "Enter") {
+                      if (idx === 3 && otpCode[3]) handleVerifyOtp();
+                    }
+                  }}
+                  className="w-14 h-14 bg-white/5 border border-white/15 rounded-xl text-center text-white text-2xl font-black focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              ))}
+            </div>
+
+            <button
+               type="button"
+               onClick={handleVerifyOtp}
+               disabled={verifyingOtp}
+               className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 text-[#181611] font-black py-4 rounded-xl transition-all"
+            >
+               {verifyingOtp ? "Verifying..." : "Verify & Book Now"}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
