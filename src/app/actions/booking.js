@@ -62,7 +62,7 @@ export async function createBooking(formData) {
       pickupDate: new Date(pickupDate),
       pickupTime,
       amount,
-      status:        isPaid ? "CONFIRMED" : "CONFIRMED",
+      status:        isPaid ? "CONFIRMED" : "PENDING",
       paymentStatus: isPaid ? "PAID" : "PENDING",
       paymentMethod,
       specialRequests,
