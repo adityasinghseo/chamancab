@@ -8,7 +8,6 @@ export default function Header({ activePage = "" }) {
     { href: "/", label: "Home", icon: "home" },
     { href: "/self-drive", label: "Self Drive Cars", icon: "car_rental" },
     { href: "/hire-driver", label: "Hire Driver", icon: "person_search" },
-    { href: "/about", label: "About Us", icon: "info" },
     { href: "/contact", label: "Contact Us", icon: "phone" },
   ];
 
@@ -23,18 +22,17 @@ export default function Header({ activePage = "" }) {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6 text-white/70 text-sm font-bold tracking-wide">
-            <a href="/self-drive" className={`hover:text-primary transition-colors flex items-center gap-1.5 ${activePage === "self-drive" ? "text-primary" : ""}`}>
-              <span className="material-symbols-outlined text-[18px]">car_rental</span> Self Drive Cars
-            </a>
-            <a href="/hire-driver" className={`hover:text-primary transition-colors flex items-center gap-1.5 ${activePage === "hire-driver" ? "text-primary" : ""}`}>
-              <span className="material-symbols-outlined text-[18px]">person_search</span> Hire Driver
-            </a>
-            <a href="/about" className={`hover:text-primary transition-colors flex items-center gap-1.5 ${activePage === "about" ? "text-primary" : ""}`}>
-              <span className="material-symbols-outlined text-[18px]">info</span> About
-            </a>
-            <a href="/admin" className="hover:text-primary transition-colors flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span> Admin
-            </a>
+            {navLinks.map(({ href, label, icon }) => (
+              <a 
+                key={href} 
+                href={href} 
+                className={`hover:text-primary transition-colors flex items-center gap-1.5 ${
+                  activePage === href.replace("/", "") || (href === "/" && activePage === "") ? "text-primary" : ""
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{icon}</span> {label}
+              </a>
+            ))}
             <a href="tel:+916386499107" className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-5 py-2.5 rounded-full transition-colors ml-2">
               <span className="material-symbols-outlined text-lg">call</span>
               Call Now

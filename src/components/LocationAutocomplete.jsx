@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { fetchGooglePlaces, fetchGooglePlaceDetails, fetchGoogleReverseGeocode } from "@/app/actions/googleMap";
 
 export default function LocationAutocomplete({ label, placeholder, icon, onSelect }) {
   const [query, setQuery] = useState("");
@@ -14,29 +15,20 @@ export default function LocationAutocomplete({ label, placeholder, icon, onSelec
     }
     setLoading(true);
     try {
-      // strictly limit searches to UP
-      const queryStr = text.toLowerCase().includes("uttar pradesh") 
-        ? text 
-        : `${text}, Uttar Pradesh`;
-        
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryStr)}&countrycodes=in&limit=8`;
-      const res = await fetch(url);
-      let data = await res.json();
+      let data = await fetchGooglePlaces(text);
       
-      data = data || [];
-      
-      // Filter out non-UP locations to be strict
-      data = data.filter(place => place.display_name.includes("Uttar Pradesh"));
+      // Filter logically to UP if preferred, or keep it open. Google autocomplete is smart.
+      // E.g. data = data.filter(place => place.display_name.includes("Uttar Pradesh"));
 
       // Inject custom unmapped BHEL Jagdishpur location if matched
       const lowerText = text.toLowerCase();
       if ("bhel jagdishpur".includes(lowerText) || lowerText.includes("bhel") || lowerText.includes("jagdishpur")) {
         const bhelCustom = {
-          display_name: "BHEL Jagdishpur, Amethi, Uttar Pradesh, 227809, India",
+          display_name: "BHEL Jagdishpur, Amethi, Uttar Pradesh, India",
+          place_id: "custom_bhel",
           lat: "26.4561010",
           lon: "81.6198203"
         };
-        // avoid duplicates if Jagdishpur is already there
         if (!data.some(d => d.display_name.includes("BHEL Jagdishpur"))) {
           data.unshift(bhelCustom);
         }
@@ -62,14 +54,55 @@ export default function LocationAutocomplete({ label, placeholder, icon, onSelec
     }, 500); // Debounce to respect Nominatim limits
   };
 
-  const handleSelect = (place) => {
+  const handleSelect = async (place) => {
     setQuery(place.display_name);
     setShowDropdown(false);
-    onSelect({
-      name: place.display_name,
-      lat: place.lat,
-      lng: place.lon,
-    });
+    setLoading(true);
+
+    if (place.place_id === 'custom_bhel') {
+      onSelect({ name: place.display_name, lat: place.lat, lng: place.lon });
+    } else {
+      const details = await fetchGooglePlaceDetails(place.place_id);
+      if (details) {
+        onSelect({ name: place.display_name, lat: details.lat, lng: details.lng });
+      } else {
+        // Fallback or error handling
+        onSelect({ name: place.display_name, lat: null, lng: null });
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    setLoading(true);
+    setShowDropdown(true); // Keep dropdown open to show loading state
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        const address = await fetchGoogleReverseGeocode(lat, lng);
+        const finalAddress = address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`; // fallback
+        
+        setQuery(finalAddress);
+        setShowDropdown(false);
+        setLoading(false);
+        
+        onSelect({ name: finalAddress, lat, lng });
+      },
+      (error) => {
+        console.error("Geolocation Error:", error);
+        alert("Failed to track location. Please ensure location permissions are granted.");
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   return (
@@ -87,8 +120,18 @@ export default function LocationAutocomplete({ label, placeholder, icon, onSelec
         placeholder={placeholder}
         className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all text-sm"
       />
-      {showDropdown && (query.trim().length > 0) && (
+      {showDropdown && (
         <div className="absolute z-50 w-full mt-2 bg-[#2a2410] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+          {/* Static Current Location Button */}
+          <button
+            type="button"
+            onClick={handleCurrentLocation}
+            className="w-full flex items-center gap-2 text-left px-4 py-3 border-b border-white/10 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-colors"
+          >
+            <span className="material-symbols-outlined text-base">my_location</span>
+            Use Current Location
+          </button>
+          
           {loading ? (
              <div className="p-3 text-xs text-white/50 text-center animate-pulse">Searching...</div>
           ) : results.length > 0 ? (

@@ -8,6 +8,19 @@ import { sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Local Rental" };
 const CAR_TYPE_ICONS = { Hatchback: "directions_car", Sedan: "directions_car", SUV: "airport_shuttle", MUV: "airport_shuttle" };
 
+function getCarImage(carName) {
+  if (!carName) return null;
+  const name = carName.toLowerCase();
+  if (name.includes("wagon")) return "/cars/wagnor.webp";
+  if (name.includes("dzire cng")) return "/cars/dzirecng.webp";
+  if (name.includes("dzire")) return "/cars/dzirepetrol.webp";
+  if (name.includes("aura") || name.includes("xcent")) return "/cars/aura.webp";
+  if (name.includes("ertiga")) return "/cars/ertiga.webp";
+  if (name.includes("innova")) return "/cars/innovacrysta.webp";
+  if (name.includes("bolero")) return "/cars/bolero.webp";
+  if (name.includes("scorpio")) return "/cars/scorpio.png";
+  return null;
+}
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long", year: "numeric" });
@@ -30,46 +43,18 @@ export default function BookingClient({ tripData, initialUser }) {
   const [errors, setErrors] = useState({});
   const [wantsGst, setWantsGst] = useState(false);
 
-  // Auth State
   const [user, setUser] = useState(initialUser);
-  const [loginPhone, setLoginPhone] = useState("");
-  const [loginOtp, setLoginOtp] = useState("");
-  const [loginStep, setLoginStep] = useState(1);
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState("");
 
   const inputClass =
     "w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm";
   const labelClass = "block text-white/70 text-xs font-semibold uppercase tracking-wider mb-1.5";
-
-  async function handleSendOtp() {
-    setLoginError("");
-    if (!loginPhone || loginPhone.length < 10) return setLoginError("Please enter a valid 10-digit number.");
-    setLoginLoading(true);
-    const res = await sendLoginOtp(loginPhone);
-    if (res.error) setLoginError(res.error);
-    else setLoginStep(2);
-    setLoginLoading(false);
-  }
-
-  async function handleVerifyOtp() {
-    setLoginError("");
-    if (!loginOtp || loginOtp.length < 4) return setLoginError("Please enter the code sent to your phone.");
-    setLoginLoading(true);
-    const res = await verifyLoginOtp(loginPhone, loginOtp);
-    if (res.error) setLoginError(res.error);
-    else setUser(res.user);
-    setLoginLoading(false);
-  }
 
   function validate(fd) {
     const errs = {};
     if (!fd.get("customerName")?.trim()) errs.customerName = "Full name is required";
     const phone = fd.get("customerPhone")?.trim();
     if (!phone) errs.customerPhone = "Phone number is required";
-    else if (!/^[\+]?[0-9]{10,13}$/.test(phone.replace(/\s/g, ""))) errs.customerPhone = "Enter a valid phone number";
-    const email = fd.get("customerEmail")?.trim();
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.customerEmail = "Enter a valid email address";
+    else if (!/^[6-9]\d{9}$/.test(phone.replace(/\s/g, ""))) errs.customerPhone = "Enter a valid 10-digit Indian mobile number";
     return errs;
   }
 
@@ -142,7 +127,6 @@ export default function BookingClient({ tripData, initialUser }) {
         order_id: order.id,
         prefill: {
            name: fd.get("customerName"),
-           email: fd.get("customerEmail") || "",
            contact: fd.get("customerPhone"),
         },
         theme: { color: "#D2A645" }, 
@@ -217,91 +201,9 @@ export default function BookingClient({ tripData, initialUser }) {
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── LEFT: Booking Form / Auth Wall ── */}
+          {/* ── LEFT: Booking Form ── */}
           <div className="lg:col-span-2">
-            {!user ? (
-              // OTP AUTH WALL (User Option 2)
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 mb-4">
-                <div className="text-center max-w-sm mx-auto my-8">
-                  <div className="bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="material-symbols-outlined text-primary text-3xl">
-                      {loginStep === 1 ? "phone_iphone" : "lock_open"}
-                    </span>
-                  </div>
-                  <h2 className="text-white font-black text-2xl mb-2">
-                    {loginStep === 1 ? "Login to Continue" : "Verify OTP"}
-                  </h2>
-                  <p className="text-white/60 text-sm mb-8">
-                    {loginStep === 1 
-                      ? "Please verify your mobile number to confirm your booking and sync your trips."
-                      : `A secure 4-digit code was sent to +91 ${loginPhone}`
-                    }
-                  </p>
-
-                  {loginError && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-xl mb-6 text-left">
-                      <span className="material-symbols-outlined text-[16px] inline-block align-text-bottom mr-1">error</span>
-                      {loginError}
-                    </div>
-                  )}
-
-                  {loginStep === 1 ? (
-                    <div className="space-y-4">
-                      <div className="relative text-left">
-                        <label className={labelClass}>Mobile Number <span className="text-primary">*</span></label>
-                        <span className="absolute left-4 top-[38px] text-white/50 text-sm">+91</span>
-                        <input
-                          type="tel"
-                          value={loginPhone}
-                          onChange={(e) => setLoginPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-                          placeholder="98765 43210"
-                          className={`${inputClass} pl-12 text-center text-lg tracking-wider font-semibold`}
-                          autoFocus
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={loginLoading || loginPhone.length < 10}
-                        className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-[#181611] font-black py-4 rounded-xl transition-all"
-                      >
-                        {loginLoading ? "Sending Code..." : "Send Secure Code"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="relative text-left">
-                        <label className={labelClass}>Enter 4-Digit Code <span className="text-primary">*</span></label>
-                        <input
-                          type="number"
-                          value={loginOtp}
-                          onChange={(e) => setLoginOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
-                          placeholder="• • • •"
-                          className={`${inputClass} text-center text-2xl tracking-[1em] font-black py-4`}
-                          autoFocus
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        disabled={loginLoading || loginOtp.length < 4}
-                        className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-[#181611] font-black py-4 rounded-xl transition-all"
-                      >
-                        {loginLoading ? "Verifying..." : "Secure Login"}
-                      </button>
-                      <button 
-                        onClick={() => { setLoginStep(1); setLoginOtp(""); }}
-                        className="text-white/40 hover:text-white text-xs underline mt-4 inline-block transition-colors"
-                      >
-                        Change Phone Number
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              // LOGGED IN CHECKOUT FORM
-              <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
                 {/* Hidden fields */}
                 <input type="hidden" name="carId"       value={carId} />
                 <input type="hidden" name="tripType"    value={type} />
@@ -320,32 +222,27 @@ export default function BookingClient({ tripData, initialUser }) {
                 {/* Section 1: Passenger Details (Prefilled securely) */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4 relative overflow-hidden">
                   
-                  {/* Verified User Badge Header */}
-                  <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-bl-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">verified_user</span>
-                    Verified Profile
-                  </div>
-
                   <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10 mt-2">
                     <div className="bg-primary/20 rounded-xl p-2">
                       <span className="material-symbols-outlined text-primary">person</span>
                     </div>
                     <div>
                       <h2 className="text-white font-black text-lg">Passenger Details</h2>
-                      <p className="text-white/50 text-xs">Verify your booking contact details</p>
+                      <p className="text-white/50 text-xs">Enter your booking contact details</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {/* Full Name */}
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className={labelClass}>
                         Full Name <span className="text-primary">*</span>
                       </label>
                       <input
                         type="text"
                         name="customerName"
-                        defaultValue={user.name || ""}
+                        autoComplete="name"
+                        defaultValue={user?.name || ""}
                         placeholder="e.g. Rahul Kumar"
                         className={`${inputClass} ${errors.customerName ? "border-red-500/70" : ""}`}
                         required
@@ -353,7 +250,7 @@ export default function BookingClient({ tripData, initialUser }) {
                       {errors.customerName && <p className="text-red-400 text-xs mt-1">{errors.customerName}</p>}
                     </div>
 
-                    {/* Phone (READ ONLY from verified login) */}
+                    {/* Phone (Editable) */}
                     <div>
                       <label className={labelClass}>
                         Mobile <span className="text-primary">*</span>
@@ -363,29 +260,19 @@ export default function BookingClient({ tripData, initialUser }) {
                         <input
                           type="tel"
                           name="customerPhone"
-                          defaultValue={user.phone}
-                          className={`${inputClass} pl-12 bg-black/20 text-white/60 cursor-not-allowed`}
-                          readOnly
+                          autoComplete="tel"
+                          maxLength={10}
+                          placeholder="9876543210"
+                          defaultValue={user?.phone || ""}
+                          className={`${inputClass} pl-12 text-white ${errors.customerPhone ? "border-red-500/70" : ""}`}
+                          required
                         />
                       </div>
+                      {errors.customerPhone && <p className="text-red-400 text-xs mt-1">{errors.customerPhone}</p>}
                     </div>
 
-                    {/* Email */}
-                    <div>
-                      <label className={labelClass}>
-                        Email Address <span className="text-white/30">(optional)</span>
-                      </label>
-                    <input
-                      type="email"
-                      name="customerEmail"
-                      placeholder="you@example.com"
-                      className={`${inputClass} ${errors.customerEmail ? "border-red-500/70" : ""}`}
-                    />
-                    {errors.customerEmail && <p className="text-red-400 text-xs mt-1">{errors.customerEmail}</p>}
-                  </div>
-
                   {/* Special Requests */}
-                  <div className="sm:col-span-2">
+                  <div>
                     <label className={labelClass}>
                       Special Requests <span className="text-white/30">(optional)</span>
                     </label>
@@ -399,7 +286,7 @@ export default function BookingClient({ tripData, initialUser }) {
 
                   {/* GST Bill Optional (One Way) */}
                   {type === "ONE_WAY" && (
-                    <div className="sm:col-span-2 mt-2">
+                    <div className="mt-2">
                        <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl">
                           <input
                             type="checkbox"
@@ -522,7 +409,6 @@ export default function BookingClient({ tripData, initialUser }) {
                 )}
               </button>
             </form>
-            )}
           </div>
 
           {/* ── RIGHT: Trip Summary ── */}
@@ -532,10 +418,14 @@ export default function BookingClient({ tripData, initialUser }) {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
                 <h3 className="text-white/60 text-xs font-bold uppercase tracking-wider mb-4">Your Selected Car</h3>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-primary/10 rounded-xl p-3 flex-shrink-0">
-                    <span className="material-symbols-outlined text-primary text-3xl">
-                      {CAR_TYPE_ICONS[car.type] ?? "directions_car"}
-                    </span>
+                  <div className="bg-primary/10 rounded-xl p-3 flex-shrink-0 w-24 h-16 flex items-center justify-center">
+                    {getCarImage(car.name) ? (
+                      <img src={getCarImage(car.name)} alt={car.name} className="w-full h-full object-contain drop-shadow-md" />
+                    ) : (
+                      <span className="material-symbols-outlined text-primary text-3xl">
+                        {CAR_TYPE_ICONS[car.type] ?? "directions_car"}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="text-white font-black">{car.name}</p>

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "./auth";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function submitDriverBooking(formData) {
   const driverId = formData.get("driverId");
@@ -59,6 +60,22 @@ export async function submitDriverBooking(formData) {
       status: "PENDING"
     }
   });
+
+  const message = `
+🚨 <b>New Driver Booking!</b>
+
+<b>Ref ID:</b> #${referenceId}
+<b>Customer:</b> ${customerName}
+<b>Phone:</b> ${customerPhone}
+
+<b>Pickup:</b> ${pickupLocation}
+<b>Date:</b> ${startDate} at ${startTime}
+<b>Duty Hours:</b> ${totalHours} Hours
+
+<b>Amount:</b> ₹${amount.toLocaleString('en-IN')}
+  `.trim();
+
+  await sendTelegramNotification(message);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

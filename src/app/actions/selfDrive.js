@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "./auth";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 function calculateHours(pickup, drop) {
   const diffMs = new Date(drop) - new Date(pickup);
@@ -122,6 +123,21 @@ export async function submitSelfDriveBooking(formData) {
       status: "PENDING"
     }
   });
+
+  const message = `
+🚨 <b>New Self-Drive Booking!</b>
+
+<b>Ref ID:</b> #${referenceId}
+<b>Customer:</b> ${customerName}
+<b>Phone:</b> ${customerPhone}
+
+<b>Pickup:</b> ${pickupLocation}
+<b>Date:</b> ${pickupDate} ${pickupTime} -> ${returnDate} ${returnTime}
+
+<b>Amount:</b> ₹${est.charge.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit
+  `.trim();
+
+  await sendTelegramNotification(message);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

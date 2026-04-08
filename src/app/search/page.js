@@ -16,6 +16,20 @@ const TRIP_LABELS = {
   RENTAL:     "Local Rental",
 };
 
+function getCarImage(carName) {
+  if (!carName) return null;
+  const name = carName.toLowerCase();
+  if (name.includes("wagon")) return "/cars/wagnor.webp";
+  if (name.includes("dzire cng")) return "/cars/dzirecng.webp";
+  if (name.includes("dzire")) return "/cars/dzirepetrol.webp";
+  if (name.includes("aura") || name.includes("xcent")) return "/cars/aura.webp";
+  if (name.includes("ertiga")) return "/cars/ertiga.webp";
+  if (name.includes("innova")) return "/cars/innovacrysta.webp";
+  if (name.includes("bolero")) return "/cars/bolero.webp";
+  if (name.includes("scorpio")) return "/cars/scorpio.png";
+  return null;
+}
+
 function formatTime(t) {
   if (!t) return "";
   const [h, m] = t.split(":");
@@ -46,8 +60,33 @@ export default async function SearchPage({ searchParams }) {
   let mapDistance = null;
   let mapDuration = null;
 
+  // ── WAGON R AVAILABILITY CHECK ──
+  // If we only have 1 Wagon R, we don't show it if it's already booked on the same day.
+  let isWagonRBooked = false;
+  if (pickupDate) {
+    const startOfDay = new Date(pickupDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(pickupDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const conflict = await prisma.booking.findFirst({
+      where: {
+        carId: 'car_wagonr_cng',
+        status: { in: ['PENDING', 'CONFIRMED'] },
+        pickupDate: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      }
+    });
+    if (conflict) isWagonRBooked = true;
+  }
+
   if (type === "ONE_WAY" || type === "ROUND_TRIP") {
-    const activeCars = await prisma.car.findMany({ where: { isActive: true } });
+    let activeCars = await prisma.car.findMany({ where: { isActive: true } });
+    if (isWagonRBooked) {
+      activeCars = activeCars.filter(c => c.id !== 'car_wagonr_cng');
+    }
     if (fromLat && fromLng && toLat && toLng) {
       const osrm = await getOsrmDistanceAndDuration(fromLat, fromLng, toLat, toLng);
       
@@ -81,6 +120,7 @@ export default async function SearchPage({ searchParams }) {
         packageId,
         isActive: true,
         car: { isActive: true },
+        ...(isWagonRBooked ? { carId: { not: 'car_wagonr_cng' } } : {})
       },
       include: { car: true },
       orderBy: { price: "asc" },
@@ -194,12 +234,16 @@ export default async function SearchPage({ searchParams }) {
               <div key={car.id} className="bg-white/5 border border-white/10 hover:border-primary/30 rounded-2xl p-5 transition-all group relative overflow-hidden">
                 <div className="flex flex-col sm:flex-row gap-5 items-start">
                   {/* Car icon / image */}
-                  <div className="bg-primary/10 rounded-xl p-4 flex-shrink-0 group-hover:bg-primary/20 transition-colors w-full sm:w-auto text-center sm:text-left">
-                    <span className="material-symbols-outlined text-primary text-5xl">
-                      {CAR_TYPE_ICONS[car.type] ?? "directions_car"}
-                    </span>
-                    <div className="mt-2 text-primary font-black text-xs uppercase tracking-widest whitespace-nowrap">
-                      {breakdown?.pricingTier === "fixed_route" ? "Fixed Price" : `₹${breakdown?.ratePerKm}/km`}
+                  <div className="bg-primary/10 rounded-xl p-4 flex-shrink-0 group-hover:bg-primary/20 transition-colors w-full sm:w-auto text-center sm:text-left md:w-40 flex flex-col justify-center items-center">
+                    {getCarImage(car.name) ? (
+                      <img src={getCarImage(car.name)} alt={car.name} className="w-full h-auto object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] transform group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <span className="material-symbols-outlined text-primary text-5xl">
+                        {CAR_TYPE_ICONS[car.type] ?? "directions_car"}
+                      </span>
+                    )}
+                    <div className="mt-4 text-primary font-black text-xs uppercase tracking-widest whitespace-nowrap hidden sm:block">
+                      {breakdown?.pricingTier === "fixed_route" ? "Fixed Price" : breakdown?.ratePerKm ? `₹${breakdown?.ratePerKm}/km` : ""}
                     </div>
                   </div>
 

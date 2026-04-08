@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 // Generate a unique reference ID like CH-2024-001234
 function generateReferenceId() {
@@ -69,7 +70,10 @@ export async function createBooking(formData) {
   });
 
   // ── Create payment record ────────────────────────────────
-  const booking = await prisma.booking.findUnique({ where: { referenceId } });
+  const booking = await prisma.booking.findUnique({ 
+    where: { referenceId },
+    include: { car: true, fromCity: true, toCity: true }
+  });
   await prisma.payment.create({
     data: {
       bookingId: booking.id,
@@ -79,6 +83,23 @@ export async function createBooking(formData) {
       razorpayPaymentId: razorpayPaymentId,
     },
   });
+
+  // ── Send Telegram Admin Alert ────────────────────────────
+  const message = `
+🚨 <b>New ${tripType.replace('_', ' ')} Booking!</b>
+
+<b>Ref ID:</b> #${referenceId}
+<b>Customer:</b> ${customerName}
+<b>Phone:</b> ${customerPhone}
+
+<b>Route:</b> ${booking.fromCity?.name || pickupAddress || 'N/A'} ➡️ ${booking.toCity?.name || dropAddress || 'N/A'}
+<b>Car:</b> ${booking.car?.name}
+<b>Date:</b> ${new Date(pickupDate).toLocaleDateString('en-IN')} at ${pickupTime}
+
+<b>Amount:</b> ₹${amount.toLocaleString('en-IN')} (${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Paid Online"})
+  `.trim();
+
+  await sendTelegramNotification(message);
 
   // ── Redirect to confirmation ─────────────────────────────
   redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
