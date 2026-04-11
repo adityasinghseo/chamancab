@@ -32,11 +32,17 @@ export default function HomeClient({ cities, packages }) {
     if (!pickupDate || !pickupTime) return;
 
     if (activeTab === "RENTAL") {
-      if (!fromCityId || !packageId) return;
+      if (!fromCityId || !packageId || !fromLocation) {
+        alert("Please select City, Package, and Pickup Location.");
+        return;
+      }
       const params = new URLSearchParams({
         type: activeTab,
         fromCityId,
         packageId,
+        fromName: fromLocation.name,
+        fromLat: fromLocation.lat,
+        fromLng: fromLocation.lng,
         pickupDate,
         pickupTime,
       });
@@ -114,26 +120,35 @@ export default function HomeClient({ cities, packages }) {
 
                 {/* Rental uses City Dropdown, others use Live Map Location */}
                 {activeTab === "RENTAL" ? (
-                  <div>
-                    <label className={labelClass}>
-                      <span className="material-symbols-outlined text-xs mr-1 align-middle">location_on</span>
-                      Select City
-                    </label>
-                    <div className="relative">
-                      <select
-                        required
-                        value={fromCityId}
-                        onChange={(e) => setFromCityId(e.target.value)}
-                        className={selectClass}
-                      >
-                        <option value="">Choose city...</option>
-                        {cities.map((c) => (
-                          <option key={c.id} value={c.id} className="bg-[#2a2410] text-white">{c.name}</option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
+                  <>
+                    <div>
+                      <label className={labelClass}>
+                        <span className="material-symbols-outlined text-xs mr-1 align-middle">location_city</span>
+                        Select City
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={fromCityId}
+                          onChange={(e) => setFromCityId(e.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">Choose city...</option>
+                          {cities.slice(0, 2).map((c) => (
+                            <option key={c.id} value={c.id} className="bg-[#2a2410] text-white">{c.name}</option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none text-lg">expand_more</span>
+                      </div>
                     </div>
-                  </div>
+                    
+                    <LocationAutocomplete 
+                      label="Pickup Location" 
+                      placeholder="Enter pickup address, landmark..." 
+                      icon="my_location" 
+                      onSelect={(loc) => setFromLocation(loc)} 
+                    />
+                  </>
                 ) : (
                   <>
                     <LocationAutocomplete 
@@ -163,7 +178,7 @@ export default function HomeClient({ cities, packages }) {
                 {activeTab === "RENTAL" && (
                   <div className="md:col-span-2">
                     <label className={labelClass}>
-                      <span className="material-symbols-outlined text-xs mr-1 align-middle">schedule</span>
+                      <span className="material-symbols-outlined text-xs mr-1 align-middle">style</span>
                       Select Package
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

@@ -10,7 +10,10 @@ export default async function AdminPricingPage() {
     prisma.car.findMany({ where: { isActive: true } }),
     prisma.city.findMany({ where: { isOperational: true } }),
     prisma.rentalPricing.findMany(),
-    prisma.rentalPackage.findMany(),
+    prisma.rentalPackage.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" }
+    }),
   ]);
 
   return (
