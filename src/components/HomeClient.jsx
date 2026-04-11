@@ -134,7 +134,7 @@ export default function HomeClient({ cities, packages }) {
                           className={selectClass}
                         >
                           <option value="">Choose city...</option>
-                          {cities.slice(0, 2).map((c) => (
+                          {cities.map((c) => (
                             <option key={c.id} value={c.id} className="bg-[#2a2410] text-white">{c.name}</option>
                           ))}
                         </select>

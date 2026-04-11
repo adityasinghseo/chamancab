@@ -21,6 +21,7 @@ export async function createCar(formData) {
     },
   });
   revalidatePath("/admin/cars");
+  revalidatePath("/", "layout");
 }
 
 export async function updateCar(id, formData) {
@@ -37,16 +38,19 @@ export async function updateCar(id, formData) {
     },
   });
   revalidatePath("/admin/cars");
+  revalidatePath("/", "layout");
 }
 
 export async function toggleCarActive(id, isActive) {
   await prisma.car.update({ where: { id }, data: { isActive } });
   revalidatePath("/admin/cars");
+  revalidatePath("/", "layout");
 }
 
 export async function deleteCar(id) {
   await prisma.car.delete({ where: { id } });
   revalidatePath("/admin/cars");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -59,6 +63,7 @@ export async function updateRoutePricing(id, price) {
     data:  { price: parseFloat(price) },
   });
   revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
 }
 
 export async function createRoutePricing(fromCityId, toCityId, carId, tripType, price) {
@@ -68,11 +73,13 @@ export async function createRoutePricing(fromCityId, toCityId, carId, tripType, 
     create: { fromCityId, toCityId, carId, tripType, price: parseFloat(price), isActive: true },
   });
   revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
 }
 
 export async function toggleRoutePricingActive(id, isActive) {
   await prisma.routePricing.update({ where: { id }, data: { isActive } });
   revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -85,6 +92,7 @@ export async function updateRentalPricing(id, price) {
     data:  { price: parseFloat(price) },
   });
   revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
 }
 
 export async function upsertRentalPricing(cityId, packageId, carId, price) {
@@ -94,6 +102,7 @@ export async function upsertRentalPricing(cityId, packageId, carId, price) {
     create: { cityId, packageId, carId, price: parseFloat(price), isActive: true },
   });
   revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -135,6 +144,7 @@ export async function createCity(formData) {
     },
   });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 export async function updateCity(id, formData) {
@@ -147,11 +157,13 @@ export async function updateCity(id, formData) {
     },
   });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 export async function toggleCityActive(id, isOperational) {
   await prisma.city.update({ where: { id }, data: { isOperational } });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -171,6 +183,7 @@ export async function createLocation(formData) {
     },
   });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 export async function updateLocation(id, formData) {
@@ -187,6 +200,7 @@ export async function updateLocation(id, formData) {
     },
   });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -203,11 +217,13 @@ export async function deleteCity(id) {
   // Use deleteMany so it silently succeeds even if city was already removed
   await prisma.city.deleteMany({ where: { id } });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 export async function deleteLocation(id) {
   await prisma.location.deleteMany({ where: { id } });
   revalidatePath("/admin/cities");
+  revalidatePath("/", "layout");
 }
 
 export async function setCityDistance(fromCityId, toCityId, distanceKm) {
@@ -321,6 +337,7 @@ export async function createPackage(formData) {
     },
   });
   revalidatePath("/admin/packages");
+  revalidatePath("/", "layout");
 }
 
 export async function updatePackage(id, formData) {
@@ -334,16 +351,19 @@ export async function updatePackage(id, formData) {
     },
   });
   revalidatePath("/admin/packages");
+  revalidatePath("/", "layout");
 }
 
 export async function togglePackageActive(id, isActive) {
   await prisma.rentalPackage.update({ where: { id }, data: { isActive } });
   revalidatePath("/admin/packages");
+  revalidatePath("/", "layout");
 }
 
 export async function deletePackage(id) {
   await prisma.rentalPackage.delete({ where: { id } });
   revalidatePath("/admin/packages");
+  revalidatePath("/", "layout");
 }
 
 // ─────────────────────────────────────────────────────────────
