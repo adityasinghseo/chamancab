@@ -237,7 +237,7 @@ export default function SelfDriveClient({ cars }) {
                        <div className="grid grid-cols-1 md:grid-cols-1 gap-5">
                          <div>
                            <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">Mobile Number <span className="text-red-500">*</span></label>
-                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} readOnly={!!session} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20 ${session ? 'opacity-50 focus:border-white/10' : ''}`}/>
+                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}/>
                          </div>
                        </div>
                      </div>
@@ -246,13 +246,13 @@ export default function SelfDriveClient({ cars }) {
 
                      <div className="space-y-5">
                        <div>
-                         <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">pin_drop</span> Pickup Location <span className="text-red-500">*</span></label>
-                         <input required name="pickupLocation" placeholder="Enter landmark or address" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20"/>
+                         <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">pin_drop</span> Branch Name <span className="text-red-500">*</span></label>
+                         <input required readOnly name="pickupLocation" value="BHEL Jagdispur" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white/50 cursor-not-allowed outline-none font-medium placeholder-white/20"/>
                        </div>
 
                        <div className="grid grid-cols-2 gap-4">
                          <div>
-                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">calendar_month</span> Pickup Date <span className="text-red-500">*</span></label>
+                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">calendar_month</span> Booking Date <span className="text-red-500">*</span></label>
                            <input required type="date" name="pickupDate" min={new Date().toISOString().split("T")[0]} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none form-input invert-0 dark:invert-[1]" />
                          </div>
                          <div>
