@@ -205,7 +205,7 @@ export default function HomeClient({ cities, packages }) {
                 <div>
                   <label className={labelClass}>
                     <span className="material-symbols-outlined text-xs mr-1 align-middle">calendar_today</span>
-                    Pickup Date
+                    {activeTab === "RENTAL" ? "Booking Date" : "Pickup Date"}
                   </label>
                   <input
                     required
