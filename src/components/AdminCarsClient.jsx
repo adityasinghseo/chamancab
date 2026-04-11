@@ -115,6 +115,9 @@ export default function AdminCarsClient({ initialCars }) {
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Fuel</th>
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Seats</th>
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">AC</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">One Way</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Local Rental</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Round Trip</th>
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
                 <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right whitespace-nowrap">Actions</th>
               </tr>
@@ -159,6 +162,9 @@ export default function AdminCarsClient({ initialCars }) {
                       <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-sm">cancel</span>
                     )}
                   </td>
+                  <td className="px-6 py-5 text-center text-lg">{car.isOneWayAvailable ? "✅" : "❌"}</td>
+                  <td className="px-6 py-5 text-center text-lg">{car.isLocalRentalAvailable ? "✅" : "❌"}</td>
+                  <td className="px-6 py-5 text-center text-lg">{car.isRoundTripAvailable ? "✅" : "❌"}</td>
                   <td className="px-6 py-5 text-center">
                      <button
                         onClick={() => handleToggleActive(car.id, car.isActive)}
@@ -282,6 +288,24 @@ export default function AdminCarsClient({ initialCars }) {
                     className="w-5 h-5 accent-primary rounded"
                   />
                   <label className="text-sm font-bold text-gray-600 dark:text-gray-300">Air Conditioned</label>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 dark:border-white/10">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Service Availability</label>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="isOneWayAvailable" value="true" defaultChecked={editingCar ? editingCar.isOneWayAvailable : true} className="w-5 h-5 accent-primary rounded" />
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Available for One Way</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="isLocalRentalAvailable" value="true" defaultChecked={editingCar ? editingCar.isLocalRentalAvailable : true} className="w-5 h-5 accent-primary rounded" />
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Available for Local Rental</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="isRoundTripAvailable" value="true" defaultChecked={editingCar ? editingCar.isRoundTripAvailable : true} className="w-5 h-5 accent-primary rounded" />
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Available for Round Trip</span>
+                  </label>
                 </div>
               </div>
 

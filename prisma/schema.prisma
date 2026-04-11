@@ -90,6 +90,11 @@ model Car {
   imageUrl        String?
   description     String?
   isActive        Boolean  @default(true)
+
+  isOneWayAvailable      Boolean  @default(true)
+  isLocalRentalAvailable Boolean  @default(true)
+  isRoundTripAvailable   Boolean  @default(true)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

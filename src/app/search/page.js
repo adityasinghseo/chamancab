@@ -83,7 +83,12 @@ export default async function SearchPage({ searchParams }) {
   }
 
   if (type === "ONE_WAY" || type === "ROUND_TRIP") {
-    let activeCars = await prisma.car.findMany({ where: { isActive: true } });
+    let activeCars = await prisma.car.findMany({ 
+      where: { 
+        isActive: true,
+        ...(type === "ONE_WAY" ? { isOneWayAvailable: true } : { isRoundTripAvailable: true })
+      } 
+    });
     if (isWagonRBooked) {
       activeCars = activeCars.filter(c => c.id !== 'car_wagonr_cng');
     }
@@ -119,7 +124,10 @@ export default async function SearchPage({ searchParams }) {
         cityId:   fromCityId,
         packageId,
         isActive: true,
-        car: { isActive: true },
+        car: { 
+          isActive: true,
+          isLocalRentalAvailable: true 
+        },
         ...(isWagonRBooked ? { carId: { not: 'car_wagonr_cng' } } : {})
       },
       include: { car: true },

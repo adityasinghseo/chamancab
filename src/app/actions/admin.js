@@ -18,6 +18,9 @@ export async function createCar(formData) {
       luggageCapacity: parseInt(formData.get("luggageCapacity")),
       description:     formData.get("description") || null,
       isActive:        true,
+      isOneWayAvailable:      formData.get("isOneWayAvailable") === "true",
+      isLocalRentalAvailable: formData.get("isLocalRentalAvailable") === "true",
+      isRoundTripAvailable:   formData.get("isRoundTripAvailable") === "true",
     },
   });
   revalidatePath("/admin/cars");
@@ -35,6 +38,9 @@ export async function updateCar(id, formData) {
       hasAC:           formData.get("hasAC") === "true",
       luggageCapacity: parseInt(formData.get("luggageCapacity")),
       description:     formData.get("description") || null,
+      isOneWayAvailable:      formData.get("isOneWayAvailable") === "true",
+      isLocalRentalAvailable: formData.get("isLocalRentalAvailable") === "true",
+      isRoundTripAvailable:   formData.get("isRoundTripAvailable") === "true",
     },
   });
   revalidatePath("/admin/cars");
