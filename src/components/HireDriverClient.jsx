@@ -212,7 +212,7 @@ export default function HireDriverClient({ drivers }) {
                        <div className="grid grid-cols-1 md:grid-cols-1 gap-5">
                          <div>
                            <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">Mobile Number <span className="text-red-500">*</span></label>
-                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} readOnly={!!session} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20 ${session ? 'opacity-50 focus:border-white/10' : ''}`}/>
+                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}/>
                          </div>
                        </div>
                      </div>
@@ -221,17 +221,17 @@ export default function HireDriverClient({ drivers }) {
 
                      <div className="space-y-5">
                        <div>
-                         <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">pin_drop</span> Report Location <span className="text-red-500">*</span></label>
+                         <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">pin_drop</span> Pickup Location <span className="text-red-500">*</span></label>
                          <input required name="pickupLocation" placeholder="Enter landmark or address for driver to arrive" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20"/>
                        </div>
 
                        <div className="grid grid-cols-2 gap-4">
                          <div>
-                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">calendar_month</span> Report Date <span className="text-red-500">*</span></label>
+                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">calendar_month</span> Date <span className="text-red-500">*</span></label>
                            <input required type="date" name="startDate" min={new Date().toISOString().split("T")[0]} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none form-input invert-0 dark:invert-[1]" />
                          </div>
                          <div>
-                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">schedule</span> Report Time <span className="text-red-500">*</span></label>
+                           <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">schedule</span> Time <span className="text-red-500">*</span></label>
                            <input required type="time" name="startTime" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none form-input invert-0 dark:invert-[1]" />
                          </div>
                        </div>
