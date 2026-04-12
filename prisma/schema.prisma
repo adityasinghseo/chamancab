@@ -90,6 +90,7 @@ model Car {
   imageUrl        String?
   description     String?
   isActive        Boolean  @default(true)
+  totalUnits      Int      @default(1)
 
   isOneWayAvailable      Boolean  @default(true)
   isLocalRentalAvailable Boolean  @default(true)

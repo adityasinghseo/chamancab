@@ -208,20 +208,20 @@ export default function AdminCarsClient({ initialCars }) {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-6 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-6 border-b border-gray-100 dark:border-white/10 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-xl font-black text-gray-900 dark:text-white">
                   {editingCar ? "Edit Vehicle" : "Add Vehicle"}
                 </h2>
                 <p className="text-xs text-gray-400">Fill in the vehicle specifications below</p>
               </div>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <button type="button" onClick={handleCloseModal} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Vehicle Name</label>
@@ -282,7 +282,21 @@ export default function AdminCarsClient({ initialCars }) {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 py-2">
+                <div>
+                  <label className="block text-xs font-black text-primary uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">inventory_2</span>
+                    Total Units
+                  </label>
+                  <input
+                    type="number"
+                    name="totalUnits"
+                    defaultValue={editingCar?.totalUnits || 1}
+                    min="1"
+                    className="w-full bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-sm font-bold text-primary outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 py-2 col-span-2">
                    <input
                     type="checkbox"
                     name="hasAC"

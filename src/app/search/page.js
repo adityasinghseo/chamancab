@@ -60,39 +60,30 @@ export default async function SearchPage({ searchParams }) {
   let mapDistance = null;
   let mapDuration = null;
 
-  // ── WAGON R AVAILABILITY CHECK ──
-  // If we only have 1 Wagon R, we don't show it if it's already booked on the same day.
-  let isWagonRBooked = false;
-  if (pickupDate) {
-    const startOfDay = new Date(pickupDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(pickupDate);
-    endOfDay.setHours(23, 59, 59, 999);
 
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        carId: 'car_wagonr_cng',
-        status: { in: ['PENDING', 'CONFIRMED'] },
-        pickupDate: {
-          gte: startOfDay,
-          lte: endOfDay
-        }
-      }
-    });
-    if (conflict) isWagonRBooked = true;
-  }
 
   if (type === "ONE_WAY" || type === "ROUND_TRIP") {
-    let activeCars = await prisma.car.findMany({ 
+    let rawCars = await prisma.car.findMany({ 
       where: { 
         isActive: true,
         ...(type === "ONE_WAY" ? { isOneWayAvailable: true } : { isRoundTripAvailable: true })
       },
-      include: { pricingSlabs: { orderBy: { minKm: 'asc' } } }
+      include: { 
+        pricingSlabs: { orderBy: { minKm: 'asc' } },
+        _count: {
+          select: {
+            bookings: {
+              where: { status: { in: ['PENDING', 'CONFIRMED'] } }
+            }
+          }
+        }
+      }
     });
-    if (isWagonRBooked) {
-      activeCars = activeCars.filter(c => c.id !== 'car_wagonr_cng');
-    }
+
+    let activeCars = rawCars.filter(c => {
+      const activeBookings = c._count?.bookings || 0;
+      return (c.totalUnits - activeBookings) > 0;
+    });
     if (fromLat && fromLng && toLat && toLng) {
       const osrm = await getOsrmDistanceAndDuration(fromLat, fromLng, toLat, toLng);
       
@@ -128,13 +119,31 @@ export default async function SearchPage({ searchParams }) {
         car: { 
           isActive: true,
           isLocalRentalAvailable: true 
-        },
-        ...(isWagonRBooked ? { carId: { not: 'car_wagonr_cng' } } : {})
+        }
       },
-      include: { car: true },
+      include: { 
+        car: {
+          include: {
+            _count: {
+              select: {
+                bookings: {
+                  where: { status: { in: ['PENDING', 'CONFIRMED'] } }
+                }
+              }
+            }
+          }
+        } 
+      },
       orderBy: { price: "asc" },
     });
-    carsWithPrices = pricings.map((p) => ({ car: p.car, price: p.price }));
+    
+    // Filter out cars that are fully booked globally
+    const availablePricings = pricings.filter(p => {
+      const activeBookings = p.car._count?.bookings || 0;
+      return (p.car.totalUnits - activeBookings) > 0;
+    });
+
+    carsWithPrices = availablePricings.map((p) => ({ car: p.car, price: p.price }));
   }
 
   const buildBookingUrl = (carId, price, breakdown) => {
