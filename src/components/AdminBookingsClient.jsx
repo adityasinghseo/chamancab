@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateBookingStatus, updatePaymentStatus } from "@/app/actions/admin";
+import { updateBookingStatus, updatePaymentStatus, createOfflineBooking } from "@/app/actions/admin";
 import { updateBookingPayment } from "@/app/actions/booking";
 
 // ─── Status configs ───────────────────────────────────────────────────────────
@@ -23,16 +23,31 @@ const PAY_STATUS_CONFIG = {
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Rental" };
 
-export default function AdminBookingsClient({ initialBookings }) {
+export default function AdminBookingsClient({ initialBookings, cars = [], cities = [] }) {
   const [filter, setFilter]               = useState("ALL");
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [paymentModal, setPaymentModal]   = useState(null); // booking for update-payment modal
+  const [paymentModal, setPaymentModal]   = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
 
   // Payment update state
   const [manualPayStatus, setManualPayStatus] = useState("PAID_OFFLINE");
   const [manualAmount, setManualAmount]   = useState("");
   const [paySuccess, setPaySuccess]       = useState(false);
+
+  // Offline booking creation
+  const [createPending, startCreate] = useTransition();
+  const [createDone, setCreateDone] = useState(false);
+
+  async function handleCreateOfflineBooking(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    startCreate(async () => {
+      await createOfflineBooking(fd);
+      setCreateDone(true);
+      setTimeout(() => { setCreateDone(false); setShowCreateModal(false); window.location.reload(); }, 1200);
+    });
+  }
 
   const filteredBookings = filter === "ALL"
     ? initialBookings
@@ -84,6 +99,13 @@ export default function AdminBookingsClient({ initialBookings }) {
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">Reservations</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Total {initialBookings.length} bookings received across all channels.</p>
         </div>
+        <button
+          onClick={() => { setShowCreateModal(true); setCreateDone(false); }}
+          className="flex items-center gap-2 bg-primary text-[#181611] font-black text-xs uppercase tracking-widest px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all"
+        >
+          <span className="material-symbols-outlined text-sm">add</span>
+          New Offline Booking
+        </button>
       </div>
 
       {/* Filter Tabs */}
@@ -291,6 +313,161 @@ export default function AdminBookingsClient({ initialBookings }) {
           </table>
         </div>
       </div>
+
+      {/* ── Create Offline Booking Modal ──────────────────────────────────── */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-xl max-h-[92vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-black/20 shrink-0">
+              <div>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Offline / Walk-in</p>
+                <h2 className="text-lg font-black text-gray-900 dark:text-white">New Booking</h2>
+              </div>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {createDone ? (
+              <div className="p-8 text-center">
+                <span className="material-symbols-outlined text-6xl text-green-400 block mb-3">check_circle</span>
+                <p className="text-gray-900 dark:text-white font-black text-lg">Booking Created!</p>
+                <p className="text-gray-400 text-sm mt-1">Refreshing list...</p>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateOfflineBooking} className="overflow-y-auto p-6 space-y-5">
+                {/* Customer Info */}
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-white/10 pb-2">Customer Details</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Full Name *</label>
+                      <input name="customerName" required placeholder="e.g. Rahul Sharma" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Phone *</label>
+                      <input name="customerPhone" required placeholder="10-digit mobile" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Email (optional)</label>
+                      <input name="customerEmail" type="email" placeholder="customer@email.com" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trip Details */}
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-white/10 pb-2">Trip Details</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Trip Type *</label>
+                      <select name="tripType" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="ONE_WAY">One Way</option>
+                        <option value="ROUND_TRIP">Round Trip</option>
+                        <option value="RENTAL">Local Rental</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Vehicle *</label>
+                      <select name="carId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="">Select car...</option>
+                        {cars.map(c => (
+                          <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">From City</label>
+                      <select name="fromCityId" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="">Select...</option>
+                        {cities.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}, {c.state}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">To City</label>
+                      <select name="toCityId" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="">Select...</option>
+                        {cities.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}, {c.state}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Pickup Address (Optional Free Text)</label>
+                      <input name="pickupAddress" placeholder="e.g. Haridwar Bus Stand, Gate 2" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Booking Date *</label>
+                      <input name="pickupDate" type="date" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Pickup Time *</label>
+                      <input name="pickupTime" type="time" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment */}
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-white/10 pb-2">Payment Info</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Total Fare (₹) *</label>
+                      <input name="totalFare" type="number" required placeholder="e.g. 1800" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Amount Collected (₹)</label>
+                      <input name="paidAmount" type="number" placeholder="0" defaultValue="0" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Status</label>
+                      <select name="paymentStatus" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID_OFFLINE">Paid (Cash / Offline)</option>
+                        <option value="PAID_FULL">Paid (Full)</option>
+                        <option value="PARTIAL_PAID">Partial Paid</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Method</label>
+                      <select name="paymentMethod" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                        <option value="OFFLINE">Offline / Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="RAZORPAY">Online (Razorpay)</option>
+                        <option value="PAY_ON_PICKUP">Pay on Pickup</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Special Requests / Notes</label>
+                  <textarea name="specialRequests" rows={2} placeholder="Any instructions or customer requests..." className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none resize-none focus:border-primary" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Admin Notes (Internal Only)</label>
+                  <textarea name="adminNotes" rows={2} placeholder="Internal notes visible only to admin..." className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none resize-none focus:border-primary" />
+                </div>
+
+                {/* Submit */}
+                <div className="flex gap-3 pt-2 pb-2">
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-sm font-black text-gray-400 hover:text-gray-700 dark:hover:text-white transition-all">Cancel</button>
+                  <button type="submit" disabled={createPending} className="flex-1 py-3 rounded-xl bg-primary text-[#181611] font-black text-sm hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                    {createPending ? (
+                      <><span className="w-4 h-4 border-2 border-[#181611]/30 border-t-[#181611] rounded-full animate-spin" /> Creating...</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-sm">check_circle</span> Confirm Booking</>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Manual Payment Update Modal ────────────────────────────────────── */}
       {paymentModal && (

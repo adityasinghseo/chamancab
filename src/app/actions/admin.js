@@ -456,3 +456,43 @@ export async function deleteSelfDriveCar(id) {
   await prisma.selfDriveCar.delete({ where: { id } });
   revalidatePath("/admin/self-drive-cars");
 }
+
+// ─────────────────────────────────────────────────────────────
+// OFFLINE BOOKING (Admin-created, no payment required)
+// ─────────────────────────────────────────────────────────────
+export async function createOfflineBooking(formData) {
+  const year = new Date().getFullYear();
+  const rand = Math.floor(100000 + Math.random() * 900000);
+  const referenceId = `CH-${year}-${rand}`;
+
+  const totalFare  = parseFloat(formData.get("totalFare") || 0);
+  const paidAmount = parseFloat(formData.get("paidAmount") || 0);
+  const paymentStatus = formData.get("paymentStatus") || "PENDING";
+
+  await prisma.booking.create({
+    data: {
+      referenceId,
+      tripType:      formData.get("tripType") || "ONE_WAY",
+      customerName:  formData.get("customerName")?.trim(),
+      customerPhone: formData.get("customerPhone")?.trim(),
+      customerEmail: formData.get("customerEmail")?.trim() || null,
+      fromCityId:    formData.get("fromCityId") || null,
+      toCityId:      formData.get("toCityId")   || null,
+      pickupAddress: formData.get("pickupAddress") || null,
+      dropAddress:   formData.get("dropAddress")   || null,
+      carId:         formData.get("carId"),
+      pickupDate:    new Date(formData.get("pickupDate")),
+      pickupTime:    formData.get("pickupTime"),
+      amount:        totalFare,
+      totalFare,
+      paidAmount,
+      paymentStatus,
+      paymentMethod: formData.get("paymentMethod") || "OFFLINE",
+      status:        "CONFIRMED",
+      specialRequests: formData.get("specialRequests") || null,
+      adminNotes:      formData.get("adminNotes") || null,
+    },
+  });
+
+  revalidatePath("/admin/bookings");
+}

@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminBookingsPage() {
-  const [bookings, selfDriveBookings, driverBookings] = await Promise.all([
+  const [bookings, selfDriveBookings, driverBookings, cars, cities] = await Promise.all([
     prisma.booking.findMany({
       include: {
         car:            true,
@@ -18,13 +18,26 @@ export default async function AdminBookingsPage() {
         dropLocation:   true,
         package:        true,
       },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.selfDriveBooking.findMany({
-      include: { car: true }
+      include: { car: true },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.driverBooking.findMany({
-      include: { driver: true }
-    })
+      include: { driver: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.car.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, type: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.city.findMany({
+      where: { isOperational: true },
+      select: { id: true, name: true, state: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const combinedBookings = [
@@ -41,6 +54,8 @@ export default async function AdminBookingsPage() {
        pickupDate: s.pickupDate,
        pickupTime: s.pickupTime,
        amount: s.amount,
+       totalFare: s.amount,
+       paidAmount: 0,
        status: s.status,
        paymentStatus: s.paymentStatus,
        paymentMethod: "DEPOSIT",
@@ -63,22 +78,27 @@ export default async function AdminBookingsPage() {
        pickupDate: d.startDate,
        pickupTime: d.startTime,
        amount: d.amount,
+       totalFare: d.amount,
+       paidAmount: 0,
        status: d.status,
        paymentStatus: d.paymentStatus,
        paymentMethod: "CASH",
        createdAt: d.createdAt,
        isSelfDrive: false,
        isDriverOnly: true,
-       totalHours: d.totalHours
+       totalHours: d.totalHours,
     }))
   ];
 
-  // Sort universally by Creation Date descending
   combinedBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <div className="p-6 lg:p-8">
-       <AdminBookingsClient initialBookings={combinedBookings} />
+       <AdminBookingsClient
+         initialBookings={combinedBookings}
+         cars={cars}
+         cities={cities}
+       />
     </div>
   );
 }
