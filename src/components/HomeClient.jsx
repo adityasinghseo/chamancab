@@ -152,7 +152,7 @@ export default function HomeClient({ cities, packages }) {
                 ) : (
                   <>
                     <LocationAutocomplete 
-                      label="Pickup Source" 
+                      label="Pickup Location" 
                       placeholder="Enter pickup address, landmark or city..." 
                       icon="my_location" 
                       onSelect={(loc) => setFromLocation(loc)} 
@@ -205,7 +205,7 @@ export default function HomeClient({ cities, packages }) {
                 <div>
                   <label className={labelClass}>
                     <span className="material-symbols-outlined text-xs mr-1 align-middle">calendar_today</span>
-                    {activeTab === "RENTAL" ? "Booking Date" : "Pickup Date"}
+                    {activeTab === "ROUND_TRIP" ? "Pickup Date" : "Booking Date"}
                   </label>
                   <input
                     required

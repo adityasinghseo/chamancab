@@ -610,11 +610,10 @@ export default function BookingClient({ tripData, initialUser }) {
                       <div className="space-y-1.5 flex-1">
                          {type === "ONE_WAY" ? (
                            <>
-                             <p className="text-green-400 font-bold">• 1 Toll Tax is completely FREE for this One-Way trip.</p>
-                             <p>• If you don't come within 10 minutes after the vehicle arrives, waiting charges will start.</p>
-                             <p>• Airport Parking and Other Parking charges are not included.</p>
-                             <p className="text-amber-400/80">• Driver Allowance (DA) Rs. 300 will be charged after 10:00 PM & before 6:00 AM.</p>
-                             <p>• Any additional Interstate charges (if applicable) are extra and to be paid as actuals.</p>
+                             <p>• If the customer does not arrive within 10 minutes after the vehicle reaches the pickup location, waiting charges will apply at ₹2 per minute.</p>
+                             <p>• Toll tax, airport parking, and other parking charges are not included in the fare and will be charged additionally.</p>
+                             <p className="text-amber-400/80">• Driver allowance of ₹200 will be applicable for travel between 9:00 PM and 6:00 AM.</p>
+                             <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
                            </>
                          ) : (
                            <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 250 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
