@@ -215,11 +215,13 @@ model Booking {
   pickupTime String
 
   // Pricing
-  amount Float
+  amount     Float   // Legacy usage depending on structure
+  totalFare  Float   @default(0)
+  paidAmount Float   @default(0)
 
   // Statuses
   status        String @default("PENDING")   // PENDING | CONFIRMED | COMPLETED | CANCELLED
-  paymentStatus String @default("PENDING")   // PENDING | PAID | FAILED | REFUNDED
+  paymentStatus String @default("PENDING")   // PENDING | PARTIAL_PAID | PAID_FULL | PAID_OFFLINE | FAILED
   paymentMethod String @default("PAY_ON_PICKUP") // PAY_ON_PICKUP | RAZORPAY
 
   // User Info (optional if they log in)

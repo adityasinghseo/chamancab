@@ -37,7 +37,8 @@ export default function BookingClient({ tripData, initialUser }) {
           carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId,
           packageId, pickupDate, pickupTime, fromName, toName } = tripData;
 
-  const [paymentMethod, setPaymentMethod] = useState("PAY_ON_PICKUP");
+  const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
+  const [paymentType, setPaymentType] = useState(type === "SELF_DRIVE" || type === "HIRE_DRIVER" ? "FULL" : "PART");
   const [isPending, startTransition] = useTransition();
   const [isPaying, setIsPaying] = useState(false);
   const [errors, setErrors] = useState({});
@@ -125,11 +126,8 @@ export default function BookingClient({ tripData, initialUser }) {
   }
 
   function processBooking(fd) {
-    if (paymentMethod === "PAY_ON_PICKUP") {
-      startTransition(() => { createBooking(fd); });
-    } else if (paymentMethod === "RAZORPAY") {
-      handleRazorpayPayment(fd);
-    }
+    // All online bookings must go through Razorpay
+    handleRazorpayPayment(fd);
   }
 
   async function handleVerifyOtp() {
@@ -163,10 +161,11 @@ export default function BookingClient({ tripData, initialUser }) {
 
     try {
       // 1. Create order on our backend
+      const requestAmount = paymentType === "PART" ? 500 : totalAmount;
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: totalAmount })
+        body: JSON.stringify({ amount: requestAmount })
       });
       const order = await orderRes.json();
 
@@ -199,6 +198,9 @@ export default function BookingClient({ tripData, initialUser }) {
             const data = await verifyRes.json();
             if (data.success) {
                fd.append("razorpayPaymentId", response.razorpay_payment_id);
+               fd.append("paymentMethod", "RAZORPAY");
+               fd.append("totalFare", totalAmount);
+               fd.append("paidAmount", paymentType === "PART" ? 500 : totalAmount);
                startTransition(() => { createBooking(fd); });
             } else {
                alert("Payment verification failed! Please contact support.");
@@ -372,45 +374,47 @@ export default function BookingClient({ tripData, initialUser }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Pay on Pickup */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("PAY_ON_PICKUP")}
-                    className={`relative border rounded-xl p-4 text-left transition-all ${
-                      paymentMethod === "PAY_ON_PICKUP"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-white/15 hover:border-white/30 bg-white/5"
-                    }`}
-                  >
-                    {paymentMethod === "PAY_ON_PICKUP" && (
-                      <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#181611] text-xs">check</span>
-                      </span>
-                    )}
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-green-500/20 rounded-lg p-2">
-                        <span className="material-symbols-outlined text-green-400 text-xl">handshake</span>
+                <div className="space-y-3">
+                  {/* Part Payment — ₹500 Deposit */}
+                  {type !== "SELF_DRIVE" && type !== "HIRE_DRIVER" && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType("PART")}
+                      className={`relative border rounded-xl p-4 text-left transition-all w-full ${
+                        paymentType === "PART"
+                          ? "border-primary bg-primary/10 ring-1 ring-primary/40"
+                          : "border-white/15 hover:border-white/30 bg-white/5"
+                      }`}
+                    >
+                      {paymentType === "PART" && (
+                        <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[#181611] text-xs">check</span>
+                        </span>
+                      )}
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="bg-primary/20 rounded-lg p-2">
+                          <span className="material-symbols-outlined text-primary text-xl">payments</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-bold text-sm">Part Payment — ₹500 Deposit</p>
+                          <p className="text-white/50 text-xs">Pay ₹{(totalAmount - 500).toLocaleString("en-IN")} remaining to driver</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white font-bold text-sm">Pay on Pickup</p>
-                        <p className="text-white/50 text-xs">Cash / UPI to driver</p>
-                      </div>
-                    </div>
-                    <p className="text-white/40 text-xs">Pay when the driver arrives. No advance needed.</p>
-                  </button>
+                      <p className="text-white/40 text-xs">Secure ₹500 now via Razorpay. Pay the rest on pickup.</p>
+                    </button>
+                  )}
 
-                  {/* Razorpay */}
+                  {/* Full Payment */}
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod("RAZORPAY")}
-                    className={`relative border rounded-xl p-4 text-left transition-all ${
-                      paymentMethod === "RAZORPAY"
+                    onClick={() => setPaymentType("FULL")}
+                    className={`relative border rounded-xl p-4 text-left transition-all w-full ${
+                      paymentType === "FULL"
                         ? "border-primary bg-primary/10 ring-1 ring-primary/40"
                         : "border-white/15 hover:border-white/30 bg-white/5"
                     }`}
                   >
-                    {paymentMethod === "RAZORPAY" && (
+                    {paymentType === "FULL" && (
                       <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-[#181611] text-xs">check</span>
                       </span>
@@ -420,12 +424,30 @@ export default function BookingClient({ tripData, initialUser }) {
                         <span className="material-symbols-outlined text-blue-400 text-xl">credit_card</span>
                       </div>
                       <div>
-                        <p className="text-white font-bold text-sm">Pay Online</p>
-                        <p className="text-white/50 text-xs">Card, UPI, Net Banking</p>
+                        <p className="text-white font-bold text-sm">Full Payment — ₹{totalAmount.toLocaleString("en-IN")}</p>
+                        <p className="text-white/50 text-xs">Card, UPI, Net Banking via Razorpay</p>
                       </div>
                     </div>
-                    <p className="text-white/40 text-xs">Secure payment via Razorpay. Instant confirmation.</p>
+                    <p className="text-white/40 text-xs">Pay 100% upfront. Secure & instant confirmation.</p>
                   </button>
+
+                  {/* Payment Summary */}
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/10 text-xs space-y-1.5">
+                    <div className="flex justify-between text-white/60">
+                      <span>Total Fare</span>
+                      <span className="text-white font-semibold">₹{totalAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between text-white/60">
+                      <span>Paying Now</span>
+                      <span className="text-primary font-bold">₹{(paymentType === "PART" ? 500 : totalAmount).toLocaleString("en-IN")}</span>
+                    </div>
+                    {paymentType === "PART" && (
+                      <div className="flex justify-between text-white/60">
+                        <span>Remaining (to driver)</span>
+                        <span className="text-yellow-400 font-semibold">₹{(totalAmount - 500).toLocaleString("en-IN")}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

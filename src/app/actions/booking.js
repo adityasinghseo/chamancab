@@ -24,8 +24,9 @@ export async function createBooking(formData) {
   const dropAddress    = formData.get("toName")   || null;
   const pickupDate     = formData.get("pickupDate");
   const pickupTime     = formData.get("pickupTime");
-  const amount         = parseFloat(formData.get("amount"));
-  const paymentMethod  = formData.get("paymentMethod"); // "PAY_ON_PICKUP" | "RAZORPAY"
+  const totalFare      = parseFloat(formData.get("totalFare") || formData.get("amount"));
+  const paidAmount     = parseFloat(formData.get("paidAmount") || 0);
+  const paymentMethod  = formData.get("paymentMethod"); // "PAY_ON_PICKUP" | "RAZORPAY" | "OFFLINE"
 
   // Customer info
   const customerName   = formData.get("customerName")?.trim();
@@ -40,6 +41,17 @@ export async function createBooking(formData) {
 
   const razorpayPaymentId = formData.get("razorpayPaymentId") || null;
   const isPaid = paymentMethod === "RAZORPAY" && razorpayPaymentId;
+  const isAdminManual = formData.get("isAdmin") === "true"; // Bypasses requirements
+
+  let paymentStatus = "PENDING";
+  if (isPaid || isAdminManual) {
+     if (paidAmount >= totalFare) paymentStatus = "PAID_FULL";
+     else if (paidAmount > 0) paymentStatus = "PARTIAL_PAID";
+     
+     if (isAdminManual && formData.get("paymentStatus")) {
+        paymentStatus = formData.get("paymentStatus"); 
+     }
+  }
 
   // ── Create booking in DB ────────────────────────────────
   const referenceId = generateReferenceId();
@@ -61,9 +73,11 @@ export async function createBooking(formData) {
       carId,
       pickupDate: new Date(pickupDate),
       pickupTime,
-      amount,
-      status:        isPaid ? "CONFIRMED" : "PENDING",
-      paymentStatus: isPaid ? "PAID" : "PENDING",
+      amount: totalFare,
+      totalFare,
+      paidAmount,
+      status:        (isPaid || isAdminManual) ? "CONFIRMED" : "PENDING",
+      paymentStatus,
       paymentMethod,
       specialRequests,
     },
@@ -103,4 +117,35 @@ export async function createBooking(formData) {
 
   // ── Redirect to confirmation ─────────────────────────────
   redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UPDATE BOOKING PAYMENT (called from /pay/[bookingId] or admin panel)
+// ─────────────────────────────────────────────────────────────────────────────
+export async function updateBookingPayment(formData) {
+  const bookingId      = formData.get("bookingId");
+  const additionalPaid = parseFloat(formData.get("additionalPaid") || 0);
+  const manualStatus   = formData.get("paymentStatus") || null;
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) throw new Error("Booking not found");
+
+  const newPaidAmount = booking.paidAmount + additionalPaid;
+  let paymentStatus = manualStatus;
+
+  if (!paymentStatus) {
+    if (newPaidAmount >= booking.totalFare) paymentStatus = "PAID_FULL";
+    else if (newPaidAmount > 0)            paymentStatus = "PARTIAL_PAID";
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      paidAmount:    newPaidAmount,
+      paymentStatus: paymentStatus || booking.paymentStatus,
+      status: (paymentStatus === "PAID_FULL" || paymentStatus === "PAID_OFFLINE")
+        ? "CONFIRMED"
+        : booking.status,
+    },
+  });
 }
