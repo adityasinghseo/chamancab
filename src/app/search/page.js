@@ -108,7 +108,7 @@ export default async function SearchPage({ searchParams }) {
         for (const car of activeCars) {
           // Pass raw one-way distance; the engine applies tier logic internally
           const breakdown = calculatePriceBreakdown(
-            car.id, osrm.distanceKm, type, pickupTime, 1,
+            car, osrm.distanceKm, type, pickupTime, 1,
             resolvedFromId, resolvedToId
           );
           if (breakdown) {

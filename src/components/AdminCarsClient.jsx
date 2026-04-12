@@ -309,6 +309,40 @@ export default function AdminCarsClient({ initialCars }) {
                 </div>
               </div>
 
+              <div className="pt-2 border-t border-gray-100 dark:border-white/10">
+                <label className="block text-xs font-black text-primary uppercase tracking-widest mb-3">Dynamic Pricing Engine (One Way / Round Trip)</label>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">One Way (₹/KM)</label>
+                    <input type="number" step="0.1" name="perKmRateOneWay" defaultValue={editingCar?.perKmRateOneWay || 20} className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Round Trip (₹/KM)</label>
+                    <input type="number" step="0.1" name="perKmRateRoundTrip" defaultValue={editingCar?.perKmRateRoundTrip || 10} className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" />
+                  </div>
+                </div>
+
+                <div className="bg-primary/5 rounded-xl border border-primary/20 p-4 space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer mb-2">
+                    <input type="checkbox" name="isShortTripRoundLogic" value="true" defaultChecked={editingCar ? editingCar.isShortTripRoundLogic : false} className="w-5 h-5 accent-primary rounded" />
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Enable Short Trip Slab Logic</span>
+                  </label>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Slab Threshold (KM)</label>
+                      <input type="number" name="shortTripThreshold" defaultValue={editingCar?.shortTripThreshold || 30} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="e.g. 30" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Minimum Base Fare (₹)</label>
+                      <input type="number" name="shortTripMinFare" defaultValue={editingCar?.shortTripMinFare || 500} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="e.g. 500" />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400 italic">If enabled, trips below the Threshold KM will be computed as "To & Fro" multiplied by the One Way rate, capped by the Minimum Base Fare above.</p>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Description (Internal)</label>
                 <textarea

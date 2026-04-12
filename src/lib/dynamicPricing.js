@@ -1,47 +1,36 @@
 import { prisma } from "@/lib/prisma";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ONEWAY RATE CARD  (₹ per km — simple multiply by exact distance)
-// ─────────────────────────────────────────────────────────────────────────────
-export const PER_KM_RATES_ONEWAY = {
-  "car_wagonr_cng":   19,
-  "car_dzire_cng":    21,
-  "car_dzire_petrol": 24,
-  "car_xcent":        24, // Aura
-  "car_bolero":       31,
-  "car_ertiga":       33,
-  "car_scorpio":      42,
-  "car_innova_crysta":53,
-};
-
-// Rates for round trip will use standard logic (to be added later)
-export const PER_KM_RATES_ROUNDTRIP = {
-  "car_wagonr_cng":   10,
-  "car_dzire_cng":    11,
-  "car_dzire_petrol": 12,
-  "car_xcent":        12, // Aura
-  "car_bolero":       13,
-  "car_ertiga":       14,
-  "car_scorpio":      17,
-  "car_innova_crysta":18,
-};
+// Removed hardcoded PER_KM_RATES! We now expect the Car object with DB fields.
 
 /**
- * Calculate simple one-way fare based on exact distance.
- * Fare = exact distance * rate
- * Round to nearest 100 at the end.
+ * Calculate simple one-way fare based on exact distance or short trip slab logic
  */
-function calculateOneWayFare(carId, exactDistance) {
-  const rate = PER_KM_RATES_ONEWAY[carId];
-  if (!rate) return null;
+function calculateOneWayFare(car, exactDistance) {
+  const rate = car.perKmRateOneWay || 20;
 
-  const fareExact = exactDistance * rate;
+  let fareExact = exactDistance * rate;
+  let chargeDistance = parseFloat(exactDistance.toFixed(1));
+  let isShortSlab = false;
+
+  // Short Distance Slab Logic
+  if (car.isShortTripRoundLogic && exactDistance < (car.shortTripThreshold || 30)) {
+     // Round distance logic
+     chargeDistance = parseFloat((exactDistance * 2).toFixed(1));
+     fareExact = chargeDistance * rate;
+     isShortSlab = true;
+     
+     // Minimum slab constraint
+     if (fareExact < (car.shortTripMinFare || 500)) {
+       fareExact = car.shortTripMinFare || 500;
+     }
+  }
+
   return {
     ratePerKm: rate,
-    chargeDistance: parseFloat(exactDistance.toFixed(1)),
+    chargeDistance: chargeDistance,
     baseFare: fareExact, // Unrounded exact base fare for display
     totalPayable: Math.round(fareExact / 100) * 100, // Final rounded value
-    pricingTier: "oneway_exact"
+    pricingTier: isShortSlab ? "oneway_short_slab" : "oneway_exact"
   };
 }
 
@@ -65,7 +54,7 @@ export async function getDistanceDb(fromCityId, toCityId) {
 // CORE PRICING ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 export function calculatePriceBreakdown(
-  carId,
+  car, // NOW EXPECTS FULL CAR OBJECT
   distance,
   tripType,
   pickupTimeStr,
@@ -75,13 +64,11 @@ export function calculatePriceBreakdown(
 ) {
   
   if (tripType === "ONE_WAY") {
-    // New simple logic: distance * fixed rate -> round to 100
-    return calculateOneWayFare(carId, distance);
+    return calculateOneWayFare(car, distance);
   }
 
-  // --- Round Trip Logic (Will be updated based on user's next instructions) ---
-  const rate = PER_KM_RATES_ROUNDTRIP[carId];
-  if (!rate) return null;
+  // --- Round Trip Logic ---
+  const rate = car.perKmRateRoundTrip || 10;
 
   // Always: actual * 2, minimum 250/day
   let chargeDistance = Math.max(distance * 2, 250 * days);

@@ -21,6 +21,11 @@ export async function createCar(formData) {
       isOneWayAvailable:      formData.get("isOneWayAvailable") === "true",
       isLocalRentalAvailable: formData.get("isLocalRentalAvailable") === "true",
       isRoundTripAvailable:   formData.get("isRoundTripAvailable") === "true",
+      perKmRateOneWay:        parseFloat(formData.get("perKmRateOneWay")) || 0,
+      perKmRateRoundTrip:     parseFloat(formData.get("perKmRateRoundTrip")) || 0,
+      shortTripThreshold:     parseInt(formData.get("shortTripThreshold")) || 30,
+      shortTripMinFare:       parseFloat(formData.get("shortTripMinFare")) || 500,
+      isShortTripRoundLogic:  formData.get("isShortTripRoundLogic") === "true",
     },
   });
   revalidatePath("/admin/cars");
@@ -41,6 +46,11 @@ export async function updateCar(id, formData) {
       isOneWayAvailable:      formData.get("isOneWayAvailable") === "true",
       isLocalRentalAvailable: formData.get("isLocalRentalAvailable") === "true",
       isRoundTripAvailable:   formData.get("isRoundTripAvailable") === "true",
+      perKmRateOneWay:        parseFloat(formData.get("perKmRateOneWay")) || 0,
+      perKmRateRoundTrip:     parseFloat(formData.get("perKmRateRoundTrip")) || 0,
+      shortTripThreshold:     parseInt(formData.get("shortTripThreshold")) || 30,
+      shortTripMinFare:       parseFloat(formData.get("shortTripMinFare")) || 500,
+      isShortTripRoundLogic:  formData.get("isShortTripRoundLogic") === "true",
     },
   });
   revalidatePath("/admin/cars");
