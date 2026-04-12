@@ -108,6 +108,22 @@ model Car {
   routePricings  RoutePricing[]
   rentalPricings RentalPricing[]
   bookings       Booking[]
+  pricingSlabs   PricingSlab[]
+}
+
+// ─────────────────────────────────────────────
+// PRICING SLAB — fixed fare buckets for short trips
+// ─────────────────────────────────────────────
+model PricingSlab {
+  id        String   @id @default(cuid())
+  carId     String
+  minKm     Int
+  maxKm     Int
+  fixedFare Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
 }
 
 // ─────────────────────────────────────────────

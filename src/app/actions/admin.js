@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 // ─────────────────────────────────────────────────────────────
 
 export async function createCar(formData) {
+  const slabs = formData.get("pricingSlabs") ? JSON.parse(formData.get("pricingSlabs")) : [];
+
   await prisma.car.create({
     data: {
       name:            formData.get("name"),
@@ -26,6 +28,13 @@ export async function createCar(formData) {
       shortTripThreshold:     parseInt(formData.get("shortTripThreshold")) || 30,
       shortTripMinFare:       parseFloat(formData.get("shortTripMinFare")) || 500,
       isShortTripRoundLogic:  formData.get("isShortTripRoundLogic") === "true",
+      pricingSlabs: {
+        create: slabs.map(s => ({
+          minKm: parseInt(s.minKm) || 0,
+          maxKm: parseInt(s.maxKm) || 0,
+          fixedFare: parseFloat(s.fixedFare) || 0
+        }))
+      }
     },
   });
   revalidatePath("/admin/cars");
@@ -33,6 +42,8 @@ export async function createCar(formData) {
 }
 
 export async function updateCar(id, formData) {
+  const slabs = formData.get("pricingSlabs") ? JSON.parse(formData.get("pricingSlabs")) : [];
+
   await prisma.car.update({
     where: { id },
     data: {
@@ -51,6 +62,14 @@ export async function updateCar(id, formData) {
       shortTripThreshold:     parseInt(formData.get("shortTripThreshold")) || 30,
       shortTripMinFare:       parseFloat(formData.get("shortTripMinFare")) || 500,
       isShortTripRoundLogic:  formData.get("isShortTripRoundLogic") === "true",
+      pricingSlabs: {
+        deleteMany: {},
+        create: slabs.map(s => ({
+          minKm: parseInt(s.minKm) || 0,
+          maxKm: parseInt(s.maxKm) || 0,
+          fixedFare: parseFloat(s.fixedFare) || 0
+        }))
+      }
     },
   });
   revalidatePath("/admin/cars");

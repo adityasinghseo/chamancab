@@ -8,6 +8,7 @@ export const metadata = {
 export default async function AdminCarsPage() {
   const cars = await prisma.car.findMany({
     orderBy: { createdAt: "desc" },
+    include: { pricingSlabs: { orderBy: { minKm: 'asc' } } }
   });
 
   return (

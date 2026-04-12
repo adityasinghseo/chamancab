@@ -87,7 +87,8 @@ export default async function SearchPage({ searchParams }) {
       where: { 
         isActive: true,
         ...(type === "ONE_WAY" ? { isOneWayAvailable: true } : { isRoundTripAvailable: true })
-      } 
+      },
+      include: { pricingSlabs: { orderBy: { minKm: 'asc' } } }
     });
     if (isWagonRBooked) {
       activeCars = activeCars.filter(c => c.id !== 'car_wagonr_cng');

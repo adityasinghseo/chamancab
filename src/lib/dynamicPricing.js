@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 // Removed hardcoded PER_KM_RATES! We now expect the Car object with DB fields.
 
 /**
- * Calculate simple one-way fare based on exact distance or short trip slab logic
+ * Calculate simple one-way fare based on exact distance or short trip fixed slabs
  */
 function calculateOneWayFare(car, exactDistance) {
   const rate = car.perKmRateOneWay || 20;
@@ -12,16 +12,13 @@ function calculateOneWayFare(car, exactDistance) {
   let chargeDistance = parseFloat(exactDistance.toFixed(1));
   let isShortSlab = false;
 
-  // Short Distance Slab Logic
-  if (car.isShortTripRoundLogic && exactDistance < (car.shortTripThreshold || 30)) {
-     // Round distance logic
-     chargeDistance = parseFloat((exactDistance * 2).toFixed(1));
-     fareExact = chargeDistance * rate;
-     isShortSlab = true;
-     
-     // Minimum slab constraint
-     if (fareExact < (car.shortTripMinFare || 500)) {
-       fareExact = car.shortTripMinFare || 500;
+  // Exact Distance Fixed Slab Logic (Overrides mathematical logic)
+  if (exactDistance <= (car.shortTripThreshold || 70) && Array.isArray(car.pricingSlabs) && car.pricingSlabs.length > 0) {
+     const applicableSlab = car.pricingSlabs.find(slab => exactDistance >= slab.minKm && exactDistance <= slab.maxKm);
+     if (applicableSlab) {
+        chargeDistance = parseFloat(exactDistance.toFixed(1)); // the real distance
+        fareExact = applicableSlab.fixedFare;
+        isShortSlab = true;
      }
   }
 
@@ -29,8 +26,8 @@ function calculateOneWayFare(car, exactDistance) {
     ratePerKm: rate,
     chargeDistance: chargeDistance,
     baseFare: fareExact, // Unrounded exact base fare for display
-    totalPayable: Math.round(fareExact / 100) * 100, // Final rounded value
-    pricingTier: isShortSlab ? "oneway_short_slab" : "oneway_exact"
+    totalPayable: isShortSlab ? fareExact : Math.round(fareExact / 100) * 100, // Do not round fixed fare slabs!
+    pricingTier: isShortSlab ? "oneway_fixed_slab" : "oneway_exact"
   };
 }
 
