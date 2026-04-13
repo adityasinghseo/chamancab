@@ -91,6 +91,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   }
 
   const formatDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const truncRoute = (str, len = 25) => str && str.length > len ? str.slice(0, len) + "…" : (str || "—");
 
   return (
     <div className="space-y-6">
@@ -192,16 +193,28 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                             </span>
                             <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{b.pickupTime}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 mt-1">
+                          <div className="flex items-center gap-1.5 mt-1 max-w-[320px]">
                             {(b.isSelfDrive || b.isDriverOnly) ? (
-                              <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.pickupLocationText}</p>
+                              <p className="text-sm font-black text-gray-900 dark:text-white truncate" title={b.pickupLocationText}>
+                                {truncRoute(b.pickupLocationText)}
+                              </p>
                             ) : (
                               <>
-                                <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.fromCity?.name || b.pickupAddress || '—'}</p>
+                                <p
+                                  className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap"
+                                  title={b.fromCity ? undefined : b.pickupAddress}
+                                >
+                                  {b.fromCity?.name || truncRoute(b.pickupAddress)}
+                                </p>
                                 {(b.toCity || b.dropAddress) && (
                                   <>
-                                    <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-[14px]">arrow_right_alt</span>
-                                    <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.toCity?.name || b.dropAddress}</p>
+                                    <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-[14px] shrink-0">arrow_right_alt</span>
+                                    <p
+                                      className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap"
+                                      title={b.toCity ? undefined : b.dropAddress}
+                                    >
+                                      {b.toCity?.name || truncRoute(b.dropAddress)}
+                                    </p>
                                   </>
                                 )}
                                 {b.package && <p className="text-[10px] text-gray-400 whitespace-nowrap">({b.package.name})</p>}
