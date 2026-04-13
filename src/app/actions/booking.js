@@ -92,7 +92,7 @@ export async function createBooking(formData) {
     data: {
       bookingId: booking.id,
       method:    paymentMethod,
-      amount,
+      amount:    paidAmount > 0 ? paidAmount : totalFare,
       status:    isPaid ? "COMPLETED" : "PENDING",
       razorpayPaymentId: razorpayPaymentId,
     },
@@ -110,7 +110,7 @@ export async function createBooking(formData) {
 <b>Car:</b> ${booking.car?.name}
 <b>Date:</b> ${new Date(pickupDate).toLocaleDateString('en-IN')} at ${pickupTime}
 
-<b>Amount:</b> ₹${amount.toLocaleString('en-IN')} (${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Paid Online"})
+<b>Amount:</b> ₹${totalFare.toLocaleString('en-IN')} (Paid: ₹${paidAmount.toLocaleString('en-IN')} via ${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Razorpay"})
   `.trim();
 
   await sendTelegramNotification(message, referenceId);
