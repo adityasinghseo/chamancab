@@ -465,34 +465,81 @@ export async function createOfflineBooking(formData) {
   const rand = Math.floor(100000 + Math.random() * 900000);
   const referenceId = `CH-${year}-${rand}`;
 
-  const totalFare  = parseFloat(formData.get("totalFare") || 0);
+  const tripType = formData.get("tripType");
+  const totalFare = parseFloat(formData.get("totalFare") || 0);
   const paidAmount = parseFloat(formData.get("paidAmount") || 0);
   const paymentStatus = formData.get("paymentStatus") || "PENDING";
+  const customerName = formData.get("customerName")?.trim();
+  const customerPhone = formData.get("customerPhone")?.trim();
+  const customerEmail = formData.get("customerEmail")?.trim() || null;
+  const pickupLocationText = formData.get("pickupAddress") || "—";
+  const pickupDate = new Date(formData.get("pickupDate"));
+  const pickupTime = formData.get("pickupTime");
 
-  await prisma.booking.create({
-    data: {
-      referenceId,
-      tripType:      formData.get("tripType") || "ONE_WAY",
-      customerName:  formData.get("customerName")?.trim(),
-      customerPhone: formData.get("customerPhone")?.trim(),
-      customerEmail: formData.get("customerEmail")?.trim() || null,
-      fromCityId:    formData.get("fromCityId") || null,
-      toCityId:      formData.get("toCityId")   || null,
-      pickupAddress: formData.get("pickupAddress") || null,
-      dropAddress:   formData.get("dropAddress")   || null,
-      carId:         formData.get("carId"),
-      pickupDate:    new Date(formData.get("pickupDate")),
-      pickupTime:    formData.get("pickupTime"),
-      amount:        totalFare,
-      totalFare,
-      paidAmount,
-      paymentStatus,
-      paymentMethod: formData.get("paymentMethod") || "OFFLINE",
-      status:        "CONFIRMED",
-      specialRequests: formData.get("specialRequests") || null,
-      adminNotes:      formData.get("adminNotes") || null,
-    },
-  });
+  if (tripType === "SELF_DRIVE") {
+    await prisma.selfDriveBooking.create({
+      data: {
+        referenceId,
+        customerName,
+        customerPhone,
+        customerEmail,
+        carId: formData.get("selfDriveCarId"),
+        pickupLocation: formData.get("pickupAddress") || "Chaman Cab Branch",
+        pickupDate,
+        pickupTime,
+        returnDate: new Date(formData.get("returnDate") || pickupDate),
+        returnTime: formData.get("returnTime") || pickupTime,
+        amount: totalFare,
+        deposit: parseFloat(formData.get("deposit") || 0),
+        status: "CONFIRMED",
+      }
+    });
+  } else if (tripType === "DRIVER") {
+    await prisma.driverBooking.create({
+      data: {
+        referenceId,
+        customerName,
+        customerPhone,
+        customerEmail,
+        driverId: formData.get("driverId"),
+        pickupLocation: pickupLocationText,
+        startDate: pickupDate,
+        startTime: pickupTime,
+        totalHours: parseFloat(formData.get("totalHours") || 8),
+        amount: totalFare,
+        status: "CONFIRMED",
+        paymentStatus,
+        paymentMethod: formData.get("paymentMethod") || "CASH",
+      }
+    });
+  } else {
+    // ONE_WAY, ROUND_TRIP, RENTAL
+    await prisma.booking.create({
+      data: {
+        referenceId,
+        tripType:      tripType || "ONE_WAY",
+        customerName,
+        customerPhone,
+        customerEmail,
+        fromCityId:    null, // Dropped for manual entry
+        toCityId:      null, // Dropped for manual entry
+        pickupAddress: formData.get("fromCityText")?.trim() || pickupLocationText,
+        dropAddress:   formData.get("toCityText")?.trim() || null,
+        carId:         formData.get("carId"),
+        packageId:     tripType === "RENTAL" ? formData.get("packageId") : null,
+        pickupDate,
+        pickupTime,
+        amount:        totalFare,
+        totalFare,
+        paidAmount,
+        paymentStatus,
+        paymentMethod: formData.get("paymentMethod") || "OFFLINE",
+        status:        "CONFIRMED",
+        specialRequests: formData.get("specialRequests") || null,
+        adminNotes:      formData.get("adminNotes") || null,
+      },
+    });
+  }
 
   revalidatePath("/admin/bookings");
 }

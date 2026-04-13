@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminBookingsPage() {
-  const [bookings, selfDriveBookings, driverBookings, cars, cities] = await Promise.all([
+  const [bookings, selfDriveBookings, driverBookings, cars, cities, packages, drivers, selfDriveCars] = await Promise.all([
     prisma.booking.findMany({
       include: {
         car:            true,
@@ -36,6 +36,18 @@ export default async function AdminBookingsPage() {
     prisma.city.findMany({
       where: { isOperational: true },
       select: { id: true, name: true, state: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.rentalPackage.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.driver.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.selfDriveCar.findMany({
+      where: { isActive: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -98,6 +110,9 @@ export default async function AdminBookingsPage() {
          initialBookings={combinedBookings}
          cars={cars}
          cities={cities}
+         packages={packages}
+         drivers={drivers}
+         selfDriveCars={selfDriveCars}
        />
     </div>
   );

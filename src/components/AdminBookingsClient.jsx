@@ -23,7 +23,7 @@ const PAY_STATUS_CONFIG = {
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Rental" };
 
-export default function AdminBookingsClient({ initialBookings, cars = [], cities = [] }) {
+export default function AdminBookingsClient({ initialBookings, cars = [], cities = [], packages = [], drivers = [], selfDriveCars = [] }) {
   const [filter, setFilter]               = useState("ALL");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [paymentModal, setPaymentModal]   = useState(null);
@@ -38,6 +38,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   // Offline booking creation
   const [createPending, startCreate] = useTransition();
   const [createDone, setCreateDone] = useState(false);
+  const [offlineTripType, setOfflineTripType] = useState("ONE_WAY");
 
   async function handleCreateOfflineBooking(e) {
     e.preventDefault();
@@ -359,53 +360,155 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-white/10 pb-2">Trip Details</p>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Trip Type *</label>
-                      <select name="tripType" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Booking Type *</label>
+                      <select name="tripType" value={offlineTripType} onChange={e => setOfflineTripType(e.target.value)} required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
                         <option value="ONE_WAY">One Way</option>
                         <option value="ROUND_TRIP">Round Trip</option>
                         <option value="RENTAL">Local Rental</option>
+                        <option value="SELF_DRIVE">Self Drive</option>
+                        <option value="DRIVER">Hire Driver</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Vehicle *</label>
-                      <select name="carId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                        <option value="">Select car...</option>
-                        {cars.map(c => (
-                          <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
-                        ))}
-                      </select>
+
+                    {/* Shared Date & Time for all types */}
+                    <div className="col-span-2 sm:col-span-1 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Date *</label>
+                        <input name="pickupDate" type="date" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Time *</label>
+                        <input name="pickupTime" type="time" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">From City</label>
-                      <select name="fromCityId" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                        <option value="">Select...</option>
-                        {cities.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}, {c.state}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">To City</label>
-                      <select name="toCityId" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                        <option value="">Select...</option>
-                        {cities.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}, {c.state}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Pickup Address (Optional Free Text)</label>
-                      <input name="pickupAddress" placeholder="e.g. Haridwar Bus Stand, Gate 2" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Booking Date *</label>
-                      <input name="pickupDate" type="date" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Pickup Time *</label>
-                      <input name="pickupTime" type="time" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
-                    </div>
+
+                    {/* 🚗 ONE WAY / 🔁 ROUND TRIP */}
+                    {(offlineTripType === "ONE_WAY" || offlineTripType === "ROUND_TRIP") && (
+                      <>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">From City (Manual) *</label>
+                          <input name="fromCityText" required placeholder="e.g. Lucknow" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">To City (Manual) *</label>
+                          <input name="toCityText" required placeholder="e.g. Ayodhya" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Vehicle *</label>
+                          <select name="carId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                            <option value="">Select standard car...</option>
+                            {cars.map(c => (
+                              <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Exact Pickup Location</label>
+                          <input name="pickupAddress" placeholder="e.g. Charbagh Station Gate 2" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        {offlineTripType === "ROUND_TRIP" && (
+                          <div className="col-span-2 grid grid-cols-2 gap-2 mt-2 border-t border-gray-100 dark:border-white/10 pt-4">
+                            <div>
+                               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Return Date</label>
+                               <input name="returnDate" type="date" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                            </div>
+                            <div>
+                               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Return Time</label>
+                               <input name="returnTime" type="time" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* 🏙 LOCAL RENTAL */}
+                    {offlineTripType === "RENTAL" && (
+                      <>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
+                          <input name="fromCityText" required placeholder="e.g. Lucknow" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Package *</label>
+                          <select name="packageId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                            <option value="">Select package...</option>
+                            {packages.map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.hours}h / {p.kilometers}km)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Vehicle *</label>
+                          <select name="carId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                            <option value="">Select standard car...</option>
+                            {cars.map(c => (
+                              <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Pickup Location</label>
+                          <input name="pickupAddress" placeholder="e.g. Hotel Taj" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                      </>
+                    )}
+
+                    {/* 🚘 SELF DRIVE */}
+                    {offlineTripType === "SELF_DRIVE" && (
+                      <>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Branch / Pickup</label>
+                          <input name="pickupAddress" defaultValue="Chaman Cab Branch" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Self Drive Car *</label>
+                          <select name="selfDriveCarId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none shadow-sm shadow-purple-500/10 border-purple-200">
+                            <option value="">Select Self Drive vehicle...</option>
+                            {selfDriveCars.map(sc => (
+                              <option key={sc.id} value={sc.id}>{sc.name} ({sc.transmission})</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-span-2 grid grid-cols-2 gap-2 mt-2 border-t border-gray-100 dark:border-white/10 pt-4">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Return Date *</label>
+                            <input name="returnDate" type="date" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Return Time *</label>
+                            <input name="returnTime" type="time" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Deposit Amount (₹) *</label>
+                           <input name="deposit" type="number" required defaultValue="5000" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                      </>
+                    )}
+
+                    {/* 👨‍✈️ HIRE DRIVER */}
+                    {offlineTripType === "DRIVER" && (
+                      <>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Driver *</label>
+                          <select name="driverId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none shadow-sm shadow-indigo-500/10 border-indigo-200">
+                            <option value="">Select professional driver...</option>
+                            {drivers.map(d => (
+                              <option key={d.id} value={d.id}>{d.name} ({d.dutyHours} - ₹{d.costPerHour}/hr)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Total Hours Needed *</label>
+                          <input name="totalHours" type="number" step="0.5" required placeholder="e.g. 8" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div className="col-span-2">
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Meet Location *</label>
+                           <input name="pickupAddress" required placeholder="e.g. Home Address" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -414,31 +517,39 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-white/10 pb-2">Payment Info</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Total Fare (₹) *</label>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        {offlineTripType === "SELF_DRIVE" ? "Estimated Rent (₹) *" : "Total Fare (₹) *"}
+                      </label>
                       <input name="totalFare" type="number" required placeholder="e.g. 1800" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Amount Collected (₹)</label>
-                      <input name="paidAmount" type="number" placeholder="0" defaultValue="0" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Status</label>
-                      <select name="paymentStatus" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                        <option value="PENDING">Pending</option>
-                        <option value="PAID_OFFLINE">Paid (Cash / Offline)</option>
-                        <option value="PAID_FULL">Paid (Full)</option>
-                        <option value="PARTIAL_PAID">Partial Paid</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Method</label>
-                      <select name="paymentMethod" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                        <option value="OFFLINE">Offline / Cash</option>
-                        <option value="UPI">UPI</option>
-                        <option value="RAZORPAY">Online (Razorpay)</option>
-                        <option value="PAY_ON_PICKUP">Pay on Pickup</option>
-                      </select>
-                    </div>
+                    {offlineTripType !== "SELF_DRIVE" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Amount Collected (₹)</label>
+                        <input name="paidAmount" type="number" placeholder="0" defaultValue="0" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
+                      </div>
+                    )}
+                    {offlineTripType !== "SELF_DRIVE" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Status</label>
+                        <select name="paymentStatus" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                          <option value="PENDING">Pending</option>
+                          <option value="PAID_OFFLINE">Paid (Cash / Offline)</option>
+                          <option value="PAID_FULL">Paid (Full)</option>
+                          <option value="PARTIAL_PAID">Partial Paid</option>
+                        </select>
+                      </div>
+                    )}
+                    {offlineTripType !== "SELF_DRIVE" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Method</label>
+                        <select name="paymentMethod" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                          <option value="OFFLINE">Offline / Cash</option>
+                          <option value="UPI">UPI</option>
+                          <option value="RAZORPAY">Online (Razorpay)</option>
+                          <option value="PAY_ON_PICKUP">Pay on Pickup</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
 
