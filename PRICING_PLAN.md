@@ -66,8 +66,8 @@ After calculating the Base Fare (`chargeDistance * Rate`), the system layers on 
 - **Amount:** `₹300` flat addition.
 
 #### Tax Processing (GST)
-- **Rule:** GST is uniformly calculated at **5%** against the absolute subtotal.
-- **Math:** `gstAmount = (Base Fare + Night Allowance) * 0.05`
+- **Rule:** GST is uniformly **OFF** by default across all trip types. It dynamically calculates at 5% only if the user explicitly opts in for a physical GST Bill during checkout.
+- **Math:** If evaluated as TRUE, `gstAmount = (Base Fare + Allowances) * 0.05`
 
 #### Rounding Rule
 - **Rule:** Standardizing prices prevents loose change confusion in checkout. Fares represent clean hundreds.
@@ -86,6 +86,5 @@ After calculating the Base Fare (`chargeDistance * Rate`), the system layers on 
 3. **Base Computation:** 276 KM * ₹12 = `₹3,312`.
 4. **Night Allowance:** Pickup is at 23:30 (Between 10PM-6AM). Add `₹300`.
 5. **Subtotal:** `₹3,612`.
-6. **GST:** 5% of ₹3,612 = `₹180.60`.
-7. **Exact Total:** `₹3,792.60`.
-8. **Rounding:** Nearest integer hundred of 3792.60 -> `₹3,800 Final Payable Amount`.
+6. **Exact Total:** `₹3,612`.
+7. **Rounding:** Nearest integer hundred of 3612 -> `₹3,600 Final Payable Amount` (Without GST factor).

@@ -67,10 +67,10 @@ export default function BookingClient({ tripData, initialUser }) {
   // Price breakdown
   const basePrice = tripData.breakdown?.baseFare || price || 0;
   // 'price' comes directly from URL which contains the fully rounded correct base total
-  let calculatedTotal = price || basePrice;
-  let dynamicGst = tripData.breakdown?.gstAmount || 0;
+  let calculatedTotal = Number(price || basePrice);
+  let dynamicGst = 0;
 
-  if (type === "ONE_WAY" && wantsGst) {
+  if (wantsGst) {
     dynamicGst = Math.round(calculatedTotal * 0.05);
     calculatedTotal += dynamicGst;
   }
@@ -341,23 +341,21 @@ export default function BookingClient({ tripData, initialUser }) {
                     />
                   </div>
 
-                  {/* GST Bill Optional (One Way) */}
-                  {type === "ONE_WAY" && (
-                    <div className="mt-2">
-                       <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl">
-                          <input
-                            type="checkbox"
-                            checked={wantsGst}
-                            onChange={(e) => setWantsGst(e.target.checked)}
-                            className="w-5 h-5 accent-primary rounded cursor-pointer"
-                          />
-                          <div className="flex-1">
-                             <p className="text-white font-bold text-sm">Need a GST Bill?</p>
-                             <p className="text-white/50 text-xs mt-0.5">Check this box to automatically add 5% GST to your total amount.</p>
-                          </div>
-                       </label>
-                    </div>
-                  )}
+                  {/* GST Bill Optional (All Types) */}
+                  <div className="mt-2">
+                     <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl transition-colors hover:bg-black/30">
+                        <input
+                          type="checkbox"
+                          checked={wantsGst}
+                          onChange={(e) => setWantsGst(e.target.checked)}
+                          className="w-5 h-5 accent-primary rounded cursor-pointer"
+                        />
+                        <div className="flex-1">
+                           <p className="text-white font-bold text-sm">Need a GST Bill?</p>
+                           <p className="text-white/50 text-xs mt-0.5">Check this box to dynamically add 5% GST to your total amount.</p>
+                        </div>
+                     </label>
+                  </div>
 
                 </div>
               </div>
@@ -609,7 +607,7 @@ export default function BookingClient({ tripData, initialUser }) {
 
                   <div className="flex justify-between text-white/70">
                     <span>GST (5%)</span>
-                    <span>+ ₹{dynamicGst.toLocaleString("en-IN")}</span>
+                    <span>{dynamicGst > 0 ? `+ ₹${dynamicGst.toLocaleString("en-IN")}` : "Not applied"}</span>
                   </div>
 
                   <div className="flex justify-between text-green-400 text-xs pt-1">

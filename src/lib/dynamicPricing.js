@@ -79,11 +79,9 @@ export function calculatePriceBreakdown(
     if (hours >= 22 || hours < 6) nightCharge = 300;
   }
 
-  // GST (5%) & final rounding to nearest ₹100
+  // Final rounding to nearest ₹100
   const subTotal  = baseFare + nightCharge;
-  const gstAmount = subTotal * 0.05;
-  const exactTotal = subTotal + gstAmount;
-  const finalPayable = Math.round(exactTotal / 100) * 100;
+  const finalPayable = Math.round(subTotal / 100) * 100;
 
   return {
     ratePerKm: rate,
@@ -91,7 +89,6 @@ export function calculatePriceBreakdown(
     pricingTier: "roundtrip_standard",
     baseFare,
     nightCharge,
-    gstAmount: Math.round(gstAmount),
     totalPayable: finalPayable,
   };
 }
