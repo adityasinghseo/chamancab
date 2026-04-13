@@ -24,6 +24,15 @@ export default function SelfDriveClient({ cars }) {
   const [isPending, startTransition] = useTransition();
   const [isPaying, setIsPaying] = useState(false);
 
+  // Strip country code helper
+  const cleanPhone = (raw = "") => {
+    let v = raw.replace(/\D/g, "");
+    if (v.startsWith("91") && v.length > 10) v = v.slice(2);
+    return v.slice(0, 10);
+  };
+
+  const [phoneVal, setPhoneVal] = useState(() => cleanPhone(session?.phone || ""));
+
   // OTP State
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState(["", "", "", ""]);
@@ -40,7 +49,10 @@ export default function SelfDriveClient({ cars }) {
   const [bookingSuccess, setBookingSuccess] = useState(null);
 
   useEffect(() => {
-    getUserSession().then(setSession);
+    getUserSession().then((s) => {
+      setSession(s);
+      if (s?.phone) setPhoneVal(cleanPhone(s.phone));
+    });
   }, []);
 
   const handleBookClick = (car) => {
@@ -319,12 +331,16 @@ export default function SelfDriveClient({ cars }) {
                        <div className="grid grid-cols-1 md:grid-cols-1 gap-5">
                          <div>
                            <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">Mobile Number <span className="text-red-500">*</span></label>
-                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}
-                             onChange={(e) => {
-                               let val = e.target.value.replace(/\D/g, "");
-                               if (val.startsWith("91") && val.length > 10) val = val.slice(2);
-                               e.target.value = val.slice(0, 10);
-                             }}
+                           <input
+                             autoComplete="tel-national"
+                             required
+                             name="customerPhone"
+                             type="tel"
+                             maxLength={10}
+                             value={phoneVal}
+                             placeholder="9876543210"
+                             className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}
+                             onChange={(e) => setPhoneVal(cleanPhone(e.target.value))}
                            />
                          </div>
                        </div>

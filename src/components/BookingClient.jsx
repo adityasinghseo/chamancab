@@ -51,6 +51,15 @@ export default function BookingClient({ tripData, initialUser }) {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [pendingFormData, setPendingFormData] = useState(null);
 
+  // Strip country code helper – handles +91 / 91 prefix from autofill
+  const cleanPhone = (raw = "") => {
+    let v = raw.replace(/\D/g, "");
+    if (v.startsWith("91") && v.length > 10) v = v.slice(2);
+    return v.slice(0, 10);
+  };
+
+  const [phoneVal, setPhoneVal] = useState(() => cleanPhone(initialUser?.phone || ""));
+
   const inputClass =
     "w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm";
   const labelClass = "block text-white/70 text-xs font-semibold uppercase tracking-wider mb-1.5";
@@ -317,17 +326,13 @@ export default function BookingClient({ tripData, initialUser }) {
                         <input
                           type="tel"
                           name="customerPhone"
-                          autoComplete="tel"
+                          autoComplete="tel-national"
                           maxLength={10}
                           placeholder="9876543210"
-                          defaultValue={user?.phone || ""}
+                          value={phoneVal}
                           className={`${inputClass} pl-12 text-white ${errors.customerPhone ? "border-red-500/70" : ""}`}
                           required
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, "");
-                            if (val.startsWith("91") && val.length > 10) val = val.slice(2);
-                            e.target.value = val.slice(0, 10);
-                          }}
+                          onChange={(e) => setPhoneVal(cleanPhone(e.target.value))}
                         />
                       </div>
                       {errors.customerPhone && <p className="text-red-400 text-xs mt-1">{errors.customerPhone}</p>}
