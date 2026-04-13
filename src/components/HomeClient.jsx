@@ -98,19 +98,19 @@ export default function HomeClient({ cities, packages }) {
           {/* ── BOOKING FORM CARD ── */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl max-w-4xl mx-auto">
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 bg-black/20 rounded-xl p-1">
+            <div className="flex gap-1.5 mb-6 bg-black/20 rounded-xl p-1">
               {tabConfig.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setToLocation(null); setFromLocation(null); setFromCityId(""); setPackageId(""); }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
+                  className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2.5 px-1 sm:px-3 rounded-lg font-semibold transition-all ${
                     activeTab === tab.id
                       ? "bg-primary text-[#181611] shadow-lg"
                       : "text-white/60 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-lg">{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="material-symbols-outlined text-[20px] sm:text-lg leading-none">{tab.icon}</span>
+                  <span className="text-[11px] sm:text-sm leading-tight text-center">{tab.label}</span>
                 </button>
               ))}
             </div>
