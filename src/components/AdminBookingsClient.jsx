@@ -196,11 +196,11 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                               <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.pickupLocationText}</p>
                             ) : (
                               <>
-                                <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.fromCity?.name ?? '—'}</p>
-                                {b.toCity && (
+                                <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.fromCity?.name || b.pickupAddress || '—'}</p>
+                                {(b.toCity || b.dropAddress) && (
                                   <>
                                     <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-[14px]">arrow_right_alt</span>
-                                    <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.toCity.name}</p>
+                                    <p className="text-sm font-black text-gray-900 dark:text-white whitespace-nowrap">{b.toCity?.name || b.dropAddress}</p>
                                   </>
                                 )}
                                 {b.package && <p className="text-[10px] text-gray-400 whitespace-nowrap">({b.package.name})</p>}
@@ -628,7 +628,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                             <div>
                               <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Route</p>
                               <p className="text-sm font-black text-gray-900 dark:text-white">
-                                {selectedBooking.fromCity?.name} → {selectedBooking.toCity?.name || selectedBooking.package?.name || 'Local'}
+                                {selectedBooking.fromCity?.name || selectedBooking.pickupAddress || '—'} → {selectedBooking.toCity?.name || selectedBooking.dropAddress || selectedBooking.package?.name || 'Local'}
                               </p>
                             </div>
                           </div>

@@ -152,9 +152,9 @@ export default async function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-1">
-                        <span>{booking.fromCity?.name ?? '—'}</span>
+                        <span>{booking.fromCity?.name || booking.pickupAddress || '—'}</span>
                         <span className="material-symbols-outlined text-[14px]">arrow_right_alt</span>
-                        <span>{booking.toCity?.name ?? booking.tripType === 'RENTAL' ? 'Local Rental' : '—'}</span>
+                        <span>{booking.toCity?.name || booking.dropAddress || (booking.tripType === 'RENTAL' ? 'Local Rental' : '—')}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
