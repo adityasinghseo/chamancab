@@ -479,7 +479,7 @@ export default function BookingClient({ tripData, initialUser }) {
                 ) : (
                   <>
                     <span className="material-symbols-outlined">check_circle</span>
-                    Confirm Booking — ₹{totalAmount.toLocaleString("en-IN")}
+                    Confirm Booking
                   </>
                 )}
               </button>
