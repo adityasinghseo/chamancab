@@ -586,7 +586,7 @@ export default function BookingClient({ tripData, initialUser }) {
                        <span>Distance Calculation</span>
                        <span>
                          {tripData.breakdown?.chargeDistance || 0} KM 
-                         {tripData.breakdown?.chargeDistance === 250 && " (Min. limit)"} 
+                         {tripData.breakdown?.chargeDistance === 200 && " (Min. limit)"} 
                          × ₹{tripData.breakdown?.baseFare / (tripData.breakdown?.chargeDistance || 1) || 0}
                        </span>
                      </div>
@@ -638,7 +638,7 @@ export default function BookingClient({ tripData, initialUser }) {
                              <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
                            </>
                          ) : (
-                           <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 250 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
+                           <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 200 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
                          )}
                       </div>
                   </div>

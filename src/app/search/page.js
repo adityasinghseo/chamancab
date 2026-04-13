@@ -296,7 +296,7 @@ export default async function SearchPage({ searchParams }) {
                             <p className="text-white/40 mb-1">Billed Distance</p>
                             <p className="text-white font-bold">{breakdown.chargeDistance} KM</p>
                             {breakdown.pricingTier === "medium_roundtrip" && <p className="text-primary/70 text-[10px] mt-0.5">*2× actual dist.</p>}
-                            {breakdown.chargeDistance === 250 && <p className="text-primary/70 text-[10px] mt-0.5">*Min. outstation</p>}
+                            {breakdown.chargeDistance === 200 && <p className="text-primary/70 text-[10px] mt-0.5">*Min. outstation</p>}
                           </div>
                         )}
                         <div>

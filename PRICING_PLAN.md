@@ -51,9 +51,9 @@ All map distances are strictly derived via OpenStreetMap OSRM routing matrices n
 
 ### B. Round Trips
 - **Rule 1:** Round trips require you to multiply the basic one-way distance by 2.
-- **Rule 2:** There is a baseline minimum limit of **250 KM per active day**. (Currently defaults to 1 day).
-- **Math:** `chargeDistance = Math.max(actual_one_way_km * 2, 250 * number_of_days)`
-- **Example:** A 100 KM one-way creates a 200 KM round physical trip. Because it falls under 250, the user will be billed for exactly 250 KM.
+- **Rule 2:** There is a baseline minimum limit of **200 KM per active day**. (Currently defaults to 1 day).
+- **Math:** `chargeDistance = Math.max(actual_one_way_km * 2, 200 * number_of_days)`
+- **Example:** A 90 KM one-way creates a 180 KM round physical trip. Because it falls under 200, the user will be billed for exactly 200 KM.
 
 ---
 
@@ -82,7 +82,7 @@ After calculating the Base Fare (`chargeDistance * Rate`), the system layers on 
 **Scenario (Round trip):** Swift Dzire Petrol (₹12/km), 138 KM physical one-way map distance, 11:30 PM Pickup.
 
 1. **Check Condition:** ROUND_TRIP.
-2. **Calculate Distance:** 138 * 2 = 276. 276 > 250 limit. Billed Distance = `276 KM`.
+2. **Calculate Distance:** 138 * 2 = 276. 276 > 200 limit. Billed Distance = `276 KM`.
 3. **Base Computation:** 276 KM * ₹12 = `₹3,312`.
 4. **Night Allowance:** Pickup is at 23:30 (Between 10PM-6AM). Add `₹300`.
 5. **Subtotal:** `₹3,612`.

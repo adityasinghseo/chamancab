@@ -67,8 +67,8 @@ export function calculatePriceBreakdown(
   // --- Round Trip Logic ---
   const rate = car.perKmRateRoundTrip || 10;
 
-  // Always: actual * 2, minimum 250/day
-  let chargeDistance = Math.max(distance * 2, 250 * days);
+  // Always: actual * 2, minimum 200/day
+  let chargeDistance = Math.max(distance * 2, 200 * days);
   
   const baseFare = chargeDistance * rate;
 
