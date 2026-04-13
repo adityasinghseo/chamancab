@@ -323,6 +323,11 @@ export default function BookingClient({ tripData, initialUser }) {
                           defaultValue={user?.phone || ""}
                           className={`${inputClass} pl-12 text-white ${errors.customerPhone ? "border-red-500/70" : ""}`}
                           required
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/\D/g, "");
+                            if (val.startsWith("91") && val.length > 10) val = val.slice(2);
+                            e.target.value = val.slice(0, 10);
+                          }}
                         />
                       </div>
                       {errors.customerPhone && <p className="text-red-400 text-xs mt-1">{errors.customerPhone}</p>}

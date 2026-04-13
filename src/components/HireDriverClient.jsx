@@ -269,7 +269,13 @@ export default function HireDriverClient({ drivers }) {
                        <div className="grid grid-cols-1 md:grid-cols-1 gap-5">
                          <div>
                            <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">Mobile Number <span className="text-red-500">*</span></label>
-                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}/>
+                           <input autoComplete="tel" required name="customerPhone" type="tel" minLength={10} maxLength={10} defaultValue={session?.phone || ""} placeholder="9876543210" className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none font-medium placeholder-white/20`}
+                             onChange={(e) => {
+                               let val = e.target.value.replace(/\D/g, "");
+                               if (val.startsWith("91") && val.length > 10) val = val.slice(2);
+                               e.target.value = val.slice(0, 10);
+                             }}
+                           />
                          </div>
                        </div>
                      </div>
