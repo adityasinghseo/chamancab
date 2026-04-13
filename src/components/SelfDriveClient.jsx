@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { getUserSession, sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
-import { submitSelfDriveBooking } from "@/app/actions/selfDrive";
+import { submitSelfDriveBooking, estimateSelfDrivePrice } from "@/app/actions/selfDrive";
 
 function getCarImage(carName) {
   if (!carName) return null;
@@ -22,6 +22,7 @@ export default function SelfDriveClient({ cars }) {
   const [selectedCar, setSelectedCar] = useState(null);
   const [session, setSession] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const [isPaying, setIsPaying] = useState(false);
 
   // OTP State
   const [showOtp, setShowOtp] = useState(false);
@@ -87,14 +88,95 @@ export default function SelfDriveClient({ cars }) {
     setShowOtp(true);
   };
 
-  const processSelfDriveBooking = (fd) => {
-    startTransition(async () => {
-      fd.append("carId", selectedCar.id);
-      if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
-      const res = await submitSelfDriveBooking(fd);
-      if (res.error) alert(res.error);
-      else setBookingSuccess(res.referenceId);
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
     });
+  };
+
+  const processSelfDriveBooking = async (fd) => {
+    fd.append("carId", selectedCar.id);
+    if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
+
+    setIsPaying(true);
+
+    const pickupDateStr = fd.get("pickupDate");
+    const pickupTimeStr = fd.get("pickupTime");
+    const returnDateStr = fd.get("returnDate");
+    const returnTimeStr = fd.get("returnTime");
+
+    const pickupFull = new Date(`${pickupDateStr}T${pickupTimeStr}`);
+    const returnFull = new Date(`${returnDateStr}T${returnTimeStr}`);
+
+    if (returnFull <= pickupFull) {
+       alert("Return time must be after pickup time.");
+       setIsPaying(false);
+       return;
+    }
+
+    try {
+      // 1. Get accurate server-side estimate
+      const est = await estimateSelfDrivePrice(selectedCar.id, pickupFull, returnFull);
+      if (est.error) {
+         alert(est.error);
+         setIsPaying(false);
+         return;
+      }
+
+      // 2. Load SDK
+      const res = await loadRazorpay();
+      if (!res) {
+         alert("Razorpay SDK failed to load. Are you online?");
+         setIsPaying(false);
+         return;
+      }
+
+      // 3. Create payment order
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: est.totalAmount }) // Base + Deposit
+      });
+      const order = await orderRes.json();
+      if (!order || !order.id) throw new Error("Order creation failed");
+
+      // 4. Fire Razorpay Pop-Up
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Chaman Cab",
+        description: `Self Drive: ${selectedCar.name}`,
+        order_id: order.id,
+        handler: function (response) {
+           fd.append("razorpayPaymentId", response.razorpay_payment_id);
+           startTransition(async () => {
+             const serverRes = await submitSelfDriveBooking(fd);
+             setIsPaying(false);
+             if (serverRes.error) alert(serverRes.error);
+             else setBookingSuccess(serverRes.referenceId);
+           });
+        },
+        modal: { ondismiss: () => setIsPaying(false) },
+        prefill: {
+          name: fd.get("customerName"),
+          contact: fd.get("customerPhone"),
+        },
+        theme: { color: "#fbb03b" },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during secure checkout.");
+      setIsPaying(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -284,11 +366,11 @@ export default function SelfDriveClient({ cars }) {
 
                      <button 
                        type="submit"
-                       disabled={isPending}
+                       disabled={isPending || isPaying}
                        className="w-full bg-primary hover:bg-[#e6a320] text-[#181611] font-black py-4 rounded-xl transition-all shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 uppercase tracking-widest flex items-center justify-center gap-2"
                      >
-                       {isPending ? "Processing..." : (
-                          <>Complete Booking <span className="material-symbols-outlined text-[18px]">check_circle</span></>
+                       {isPending || isPaying ? "Processing Payment..." : (
+                          <>Pay & Complete Booking <span className="material-symbols-outlined text-[18px]">check_circle</span></>
                        )}
                      </button>
                   </form>

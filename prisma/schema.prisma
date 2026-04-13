@@ -332,6 +332,9 @@ model SelfDriveBooking {
   deposit         Float    @default(5000)
   
   status          String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  paymentStatus   String   @default("PENDING")
+  paymentMethod   String   @default("RAZORPAY")
+  razorpayPaymentId String?
 
   userId          String?
   user            User?    @relation(fields: [userId], references: [id])
@@ -374,7 +377,8 @@ model DriverBooking {
 
   status          String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
   paymentStatus   String   @default("PENDING")
-  paymentMethod   String   @default("CASH")
+  paymentMethod   String   @default("RAZORPAY")
+  razorpayPaymentId String?
 
   userId          String?
   user            User?    @relation(fields: [userId], references: [id])

@@ -44,6 +44,9 @@ export async function submitDriverBooking(formData) {
   const count = await prisma.driverBooking.count();
   const referenceId = `DRV-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
 
+  const razorpayPaymentId = formData.get("razorpayPaymentId");
+  const isPaid = !!razorpayPaymentId;
+
   const booking = await prisma.driverBooking.create({
     data: {
       referenceId,
@@ -57,7 +60,10 @@ export async function submitDriverBooking(formData) {
       totalHours,
       amount,
       userId: finalUserId,
-      status: "PENDING"
+      status: isPaid ? "CONFIRMED" : "PENDING",
+      paymentStatus: isPaid ? "PAID_FULL" : "PENDING",
+      paymentMethod: isPaid ? "RAZORPAY" : "CASH",
+      razorpayPaymentId: razorpayPaymentId || null
     }
   });
 
@@ -72,7 +78,7 @@ export async function submitDriverBooking(formData) {
 <b>Date:</b> ${startDate} at ${startTime}
 <b>Duty Hours:</b> ${totalHours} Hours
 
-<b>Amount:</b> ₹${amount.toLocaleString('en-IN')}
+<b>Amount:</b> ₹${amount.toLocaleString('en-IN')} ${isPaid ? "(Paid Online via Razorpay)" : "(Cash / Unpaid)"}
   `.trim();
 
   await sendTelegramNotification(message, referenceId);

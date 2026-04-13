@@ -8,6 +8,7 @@ export default function HireDriverClient({ drivers }) {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [session, setSession] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const [isPaying, setIsPaying] = useState(false);
 
   // Booking Form State
   const [startDate, setStartDate] = useState("");
@@ -69,14 +70,70 @@ export default function HireDriverClient({ drivers }) {
     setShowOtp(true);
   };
 
-  const processDriverBooking = (fd) => {
-    startTransition(async () => {
-      fd.append("driverId", selectedDriver.id);
-      if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
-      const res = await submitDriverBooking(fd);
-      if (res.error) alert(res.error);
-      else setBookingSuccess(res.referenceId);
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
     });
+  };
+
+  const processDriverBooking = async (fd) => {
+    fd.append("driverId", selectedDriver.id);
+    if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
+
+    setIsPaying(true);
+    const res = await loadRazorpay();
+    if (!res) {
+       alert("Razorpay SDK failed to load. Are you online?");
+       setIsPaying(false);
+       return;
+    }
+
+    const amount = selectedDriver.costPerHour * parseHours(selectedDriver.dutyHours);
+
+    try {
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Math.round(amount) })
+      });
+      const order = await orderRes.json();
+      if (!order || !order.id) throw new Error("Order creation failed");
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Chaman Cab",
+        description: `Hire Driver: ${selectedDriver.name}`,
+        order_id: order.id,
+        handler: function (response) {
+           fd.append("razorpayPaymentId", response.razorpay_payment_id);
+           startTransition(async () => {
+             const serverRes = await submitDriverBooking(fd);
+             setIsPaying(false);
+             if (serverRes.error) alert(serverRes.error);
+             else setBookingSuccess(serverRes.referenceId);
+           });
+        },
+        modal: { ondismiss: () => setIsPaying(false) },
+        prefill: {
+          name: fd.get("customerName"),
+          contact: fd.get("customerPhone"),
+        },
+        theme: { color: "#fbb03b" },
+      };
+      
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      console.error(err);
+      alert("Payment initialization error.");
+      setIsPaying(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -247,11 +304,11 @@ export default function HireDriverClient({ drivers }) {
 
                      <button 
                        type="submit"
-                       disabled={isPending}
+                       disabled={isPending || isPaying}
                        className="w-full bg-primary hover:bg-[#e6a320] text-[#181611] font-black py-4 rounded-xl transition-all shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 uppercase tracking-widest flex items-center justify-center gap-2"
                      >
-                       {isPending ? "Processing..." : (
-                          <>Complete Booking <span className="material-symbols-outlined text-[18px]">check_circle</span></>
+                       {isPending || isPaying ? "Processing Payment..." : (
+                          <>Pay & Complete Booking <span className="material-symbols-outlined text-[18px]">check_circle</span></>
                        )}
                      </button>
                   </form>

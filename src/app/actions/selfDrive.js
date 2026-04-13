@@ -105,6 +105,9 @@ export async function submitSelfDriveBooking(formData) {
   const count = await prisma.selfDriveBooking.count();
   const referenceId = `SD-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
 
+  const razorpayPaymentId = formData.get("razorpayPaymentId");
+  const isPaid = !!razorpayPaymentId;
+
   const booking = await prisma.selfDriveBooking.create({
     data: {
       referenceId,
@@ -120,7 +123,10 @@ export async function submitSelfDriveBooking(formData) {
       amount: est.charge,
       deposit: est.deposit,
       userId: finalUserId,
-      status: "PENDING"
+      status: isPaid ? "CONFIRMED" : "PENDING",
+      paymentStatus: isPaid ? "PAID_FULL" : "PENDING",
+      paymentMethod: isPaid ? "RAZORPAY" : "CASH",
+      razorpayPaymentId: razorpayPaymentId || null
     }
   });
 
@@ -132,9 +138,7 @@ export async function submitSelfDriveBooking(formData) {
 <b>Phone:</b> ${customerPhone}
 
 <b>Pickup:</b> ${pickupLocation}
-<b>Date:</b> ${pickupDate} ${pickupTime} -> ${returnDate} ${returnTime}
-
-<b>Amount:</b> ₹${est.charge.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit
+<b>Amount:</b> ₹${est.charge.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit ${isPaid ? "(Paid Online via Razorpay)" : "(Unpaid)"}
   `.trim();
 
   await sendTelegramNotification(message, referenceId);
