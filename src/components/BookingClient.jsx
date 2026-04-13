@@ -375,32 +375,32 @@ export default function BookingClient({ tripData, initialUser }) {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Part Payment — ₹500 Deposit */}
+                  {/* Pay ₹500 Advance & Book */}
                   {type !== "SELF_DRIVE" && type !== "HIRE_DRIVER" && (
                     <button
                       type="button"
                       onClick={() => setPaymentType("PART")}
                       className={`relative border rounded-xl p-4 text-left transition-all w-full ${
                         paymentType === "PART"
-                          ? "border-primary bg-primary/10 ring-1 ring-primary/40"
+                          ? "border-primary bg-primary/20 ring-2 ring-primary/60 shadow-xl shadow-primary/10"
                           : "border-white/15 hover:border-white/30 bg-white/5"
                       }`}
                     >
                       {paymentType === "PART" && (
-                        <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[#181611] text-xs">check</span>
+                        <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-md">
+                          <span className="material-symbols-outlined text-[#181611] text-xs font-bold">check</span>
                         </span>
                       )}
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-primary/20 rounded-lg p-2">
+                        <div className="bg-primary/30 rounded-lg p-2 shadow-sm">
                           <span className="material-symbols-outlined text-primary text-xl">payments</span>
                         </div>
                         <div>
-                          <p className="text-white font-bold text-sm">Part Payment — ₹500 Deposit</p>
-                          <p className="text-white/50 text-xs">Pay ₹{(totalAmount - 500).toLocaleString("en-IN")} remaining to driver</p>
+                          <p className="text-white font-bold text-sm">Pay ₹500 Advance & Book</p>
+                          <p className="text-white/60 text-xs mt-0.5 font-medium">Pay ₹{(totalAmount - 500).toLocaleString("en-IN")} remaining to driver</p>
                         </div>
                       </div>
-                      <p className="text-white/40 text-xs">Secure ₹500 now via Razorpay. Pay the rest on pickup.</p>
+                      <p className="text-white/50 text-xs">Secure ₹500 advance now via Razorpay.</p>
                     </button>
                   )}
 
