@@ -35,7 +35,7 @@ function formatTime(t) {
 export default function BookingClient({ tripData, initialUser }) {
   const { car, fromCity, toCity, pickupLoc, dropLoc, rentalPkg,
           carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId,
-          packageId, pickupDate, pickupTime, fromName, toName } = tripData;
+          packageId, pickupDate, pickupTime, returnDate: initReturnDate, returnTime: initReturnTime, fromName, toName } = tripData;
 
   const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
   const [paymentType, setPaymentType] = useState(type === "SELF_DRIVE" || type === "HIRE_DRIVER" ? "FULL" : "PART");
@@ -58,8 +58,8 @@ export default function BookingClient({ tripData, initialUser }) {
     return v.slice(0, 10);
   };
 
-  const [returnDate, setReturnDate] = useState("");
-  const [returnTime, setReturnTime] = useState("");
+  const [returnDate, setReturnDate] = useState(initReturnDate || "");
+  const [returnTime, setReturnTime] = useState(initReturnTime || "");
   const [phoneVal, setPhoneVal] = useState(() => cleanPhone(initialUser?.phone || ""));
 
   const inputClass =
@@ -629,6 +629,18 @@ export default function BookingClient({ tripData, initialUser }) {
                     <span className="material-symbols-outlined text-primary/70 text-base">schedule</span>
                     <span>{formatTime(pickupTime)}</span>
                   </div>
+                  {type === "ROUND_TRIP" && returnDate && (
+                    <>
+                      <div className="flex items-center gap-2 text-white/60 pt-1">
+                        <span className="material-symbols-outlined text-primary/70 text-base">event_return</span>
+                        <span suppressHydrationWarning>{formatDate(returnDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-white/60">
+                        <span className="material-symbols-outlined text-primary/70 text-base">history</span>
+                        <span>{formatTime(returnTime)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

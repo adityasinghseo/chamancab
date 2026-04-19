@@ -39,7 +39,7 @@ function formatTime(t) {
 
 export default async function SearchPage({ searchParams }) {
   const params = await searchParams;
-  const { type, fromCityId, toCityId, packageId, pickupDate, pickupTime, fromName, fromLat, fromLng, toName, toLat, toLng } = params;
+  const { type, fromCityId, toCityId, packageId, pickupDate, pickupTime, returnDate, returnTime, fromName, fromLat, fromLng, toName, toLat, toLng } = params;
 
   // Rental relies on DB Cities; also resolve IDs for short-route fixed pricing
   const [fromCity, rentalPackage, allCities] = await Promise.all([
@@ -154,6 +154,8 @@ export default async function SearchPage({ searchParams }) {
       ...(packageId  && { packageId }),
       ...(fromName   && { fromName }),
       ...(toName     && { toName }),
+      ...(returnDate && { returnDate }),
+      ...(returnTime && { returnTime }),
     });
 
     if (breakdown) {
@@ -212,13 +214,25 @@ export default async function SearchPage({ searchParams }) {
               </div>
             )}
 
-            <div className="flex-shrink-0 flex items-center gap-1.5 md:gap-2 text-white/60 text-[11px] md:text-xs whitespace-nowrap">
-              <span className="material-symbols-outlined text-sm hidden md:block">calendar_month</span>
-              <span suppressHydrationWarning>
-                {pickupDate ? new Date(pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                <span className="mx-1 md:mx-2 opacity-30">·</span> 
-                {formatTime(pickupTime)}
-              </span>
+            <div className="flex-shrink-0 flex flex-col items-end gap-1 md:gap-1.5 text-white/60 text-[11px] md:text-xs min-w-0 flex-1">
+              <div className="flex items-center gap-1 inline-flex whitespace-nowrap overflow-hidden text-ellipsis w-full justify-end">
+                <span className="material-symbols-outlined text-sm hidden md:block">calendar_month</span>
+                <span suppressHydrationWarning>
+                  {pickupDate ? new Date(pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+                  <span className="mx-1 opacity-30">·</span> 
+                  {formatTime(pickupTime)}
+                </span>
+              </div>
+              {type === "ROUND_TRIP" && returnDate && (
+                <div className="flex items-center gap-1 inline-flex whitespace-nowrap overflow-hidden text-ellipsis w-full justify-end">
+                  <span className="material-symbols-outlined text-[12px] hidden md:block opacity-60">event_return</span>
+                  <span suppressHydrationWarning className="opacity-80">
+                    {new Date(returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    <span className="mx-1 opacity-30">·</span> 
+                    {formatTime(returnTime)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <a href="/" className="flex-shrink-0 inline-flex items-center justify-center gap-1 md:gap-2 text-primary hover:text-white font-bold text-[11px] md:text-xs bg-white/5 hover:bg-white/10 px-3 md:px-4 py-2 border border-white/10 rounded-lg transition-colors md:ml-2">

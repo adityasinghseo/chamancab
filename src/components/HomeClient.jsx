@@ -26,6 +26,8 @@ export default function HomeClient({ cities, packages }) {
   
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -53,6 +55,16 @@ export default function HomeClient({ cities, packages }) {
         alert("Please select valid Pickup and Drop locations from the suggestions dropdown!");
         return;
       }
+      if (activeTab === "ROUND_TRIP") {
+        if (!returnDate || !returnTime) {
+          alert("Please select Return Date and Time for Round Trip.");
+          return;
+        }
+        if (new Date(returnDate) < new Date(pickupDate)) {
+          alert("Return Date must be same or after Pickup Date.");
+          return;
+        }
+      }
       const params = new URLSearchParams({
         type: activeTab,
         fromName: fromLocation.name,
@@ -63,6 +75,7 @@ export default function HomeClient({ cities, packages }) {
         toLng: toLocation.lng,
         pickupDate,
         pickupTime,
+        ...(activeTab === "ROUND_TRIP" && { returnDate, returnTime }),
       });
       router.push(`/search?${params.toString()}`);
     }
@@ -232,6 +245,40 @@ export default function HomeClient({ cities, packages }) {
                     className={inputClass}
                   />
                 </div>
+                
+                {/* Return Fields for Round Trip */}
+                {activeTab === "ROUND_TRIP" && (
+                  <>
+                    <div>
+                      <label className={labelClass}>
+                        <span className="material-symbols-outlined text-xs mr-1 align-middle">event_return</span>
+                        Return Date
+                      </label>
+                      <input
+                        required
+                        type="date"
+                        value={returnDate}
+                        min={pickupDate || new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className={inputClass}
+                        suppressHydrationWarning
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>
+                        <span className="material-symbols-outlined text-xs mr-1 align-middle">history</span>
+                        Return Time
+                      </label>
+                      <input
+                        required
+                        type="time"
+                        value={returnTime}
+                        onChange={(e) => setReturnTime(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Submit */}
