@@ -191,7 +191,6 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                             }`}>
                               {b.tripType === 'SELF_DRIVE' ? "Self Drive" : b.tripType === 'DRIVER' ? "Driver Hire" : TRIP_LABELS[b.tripType] || b.tripType}
                             </span>
-                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{b.pickupTime}</span>
                           </div>
                           <div className="flex items-center gap-1.5 mt-1 max-w-[320px]">
                             {(b.isSelfDrive || b.isDriverOnly) ? (
@@ -221,7 +220,12 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                               </>
                             )}
                           </div>
-                          <p className="text-[10px] text-gray-400">{formatDate(b.pickupDate)}</p>
+                          <div className="mt-1 flex flex-col gap-0.5 whitespace-nowrap">
+                            <p className="text-[10px] text-gray-400">Pickup: {formatDate(b.pickupDate)}, {b.pickupTime}</p>
+                            {b.tripType === "ROUND_TRIP" && b.returnDate && (
+                              <p className="text-[10px] text-gray-400">Return: {formatDate(b.returnDate)}, {b.returnTime}</p>
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -759,8 +763,19 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                           <div className="flex items-start gap-3">
                             <span className="material-symbols-outlined text-gray-400 text-[20px]">schedule</span>
                             <div>
-                              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Schedule</p>
-                              <p className="text-sm font-black text-gray-900 dark:text-white">{formatDate(selectedBooking.pickupDate)} @ {selectedBooking.pickupTime}</p>
+                              {selectedBooking.tripType === "ROUND_TRIP" ? (
+                                <>
+                                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Schedule</p>
+                                  <p className="text-sm font-black text-gray-900 dark:text-white mb-2">{formatDate(selectedBooking.pickupDate)} @ {selectedBooking.pickupTime}</p>
+                                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Return Schedule</p>
+                                  <p className="text-sm font-black text-gray-900 dark:text-white">{selectedBooking.returnDate ? formatDate(selectedBooking.returnDate) : "—"} @ {selectedBooking.returnTime || "—"}</p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Schedule</p>
+                                  <p className="text-sm font-black text-gray-900 dark:text-white">{formatDate(selectedBooking.pickupDate)} @ {selectedBooking.pickupTime}</p>
+                                </>
+                              )}
                             </div>
                           </div>
                         </>

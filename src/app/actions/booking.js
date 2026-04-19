@@ -24,6 +24,8 @@ export async function createBooking(formData) {
   const dropAddress    = formData.get("toName")   || null;
   const pickupDate     = formData.get("pickupDate");
   const pickupTime     = formData.get("pickupTime");
+  const returnDate     = formData.get("returnDate") || null;
+  const returnTime     = formData.get("returnTime") || null;
   const totalFare      = parseFloat(formData.get("totalFare") || formData.get("amount"));
   const paidAmount     = parseFloat(formData.get("paidAmount") || 0);
   const paymentMethod  = formData.get("paymentMethod"); // "PAY_ON_PICKUP" | "RAZORPAY" | "OFFLINE"
@@ -37,6 +39,10 @@ export async function createBooking(formData) {
   // ── Validation ───────────────────────────────────────────
   if (!carId || !tripType || !pickupDate || !pickupTime || !customerName || !customerPhone) {
     throw new Error("Missing required booking fields");
+  }
+
+  if (tripType === "ROUND_TRIP") {
+    if (!returnDate || !returnTime) throw new Error("Round trip requires return date and time");
   }
 
   const razorpayPaymentId = formData.get("razorpayPaymentId") || null;
@@ -73,6 +79,8 @@ export async function createBooking(formData) {
       carId,
       pickupDate: new Date(pickupDate),
       pickupTime,
+      returnDate: returnDate ? new Date(returnDate) : null,
+      returnTime,
       amount: totalFare,
       totalFare,
       paidAmount,

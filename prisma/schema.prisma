@@ -213,6 +213,8 @@ model Booking {
 
   pickupDate DateTime
   pickupTime String
+  returnDate DateTime?
+  returnTime String?
 
   // Pricing
   amount     Float   // Legacy usage depending on structure

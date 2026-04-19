@@ -58,6 +58,8 @@ export default function BookingClient({ tripData, initialUser }) {
     return v.slice(0, 10);
   };
 
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
   const [phoneVal, setPhoneVal] = useState(() => cleanPhone(initialUser?.phone || ""));
 
   const inputClass =
@@ -70,6 +72,17 @@ export default function BookingClient({ tripData, initialUser }) {
     const phone = fd.get("customerPhone")?.trim();
     if (!phone) errs.customerPhone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(phone.replace(/\s/g, ""))) errs.customerPhone = "Enter a valid 10-digit Indian mobile number";
+    
+    if (type === "ROUND_TRIP") {
+      const rd = fd.get("returnDate");
+      const rt = fd.get("returnTime");
+      if (!rd) errs.returnDate = "Return date is required";
+      if (!rt) errs.returnTime = "Return time is required";
+      if (rd && pickupDate && new Date(rd) < new Date(pickupDate)) {
+        errs.returnDate = "Return date must be same or after pickup date";
+      }
+    }
+    
     return errs;
   }
 
@@ -351,8 +364,43 @@ export default function BookingClient({ tripData, initialUser }) {
                     />
                   </div>
 
+                  {/* Return Fields for Round Trip */}
+                  {type === "ROUND_TRIP" && (
+                    <div className="mt-2 pt-4 border-t border-white/10">
+                      <p className="text-white font-bold text-sm mb-3">Return Schedule</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelClass}>Return Date <span className="text-primary">*</span></label>
+                          <input 
+                            type="date" 
+                            name="returnDate" 
+                            value={returnDate} 
+                            onChange={e => setReturnDate(e.target.value)} 
+                            min={pickupDate} 
+                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnDate ? "border-red-500/70" : ""}`} 
+                            required 
+                          />
+                          {errors.returnDate && <p className="text-red-400 text-xs mt-1">{errors.returnDate}</p>}
+                        </div>
+                        <div>
+                          <label className={labelClass}>Return Time <span className="text-primary">*</span></label>
+                          <input 
+                            type="time" 
+                            name="returnTime" 
+                            value={returnTime} 
+                            onChange={e => setReturnTime(e.target.value)} 
+                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnTime ? "border-red-500/70" : ""}`} 
+                            required 
+                          />
+                          {errors.returnTime && <p className="text-red-400 text-xs mt-1">{errors.returnTime}</p>}
+                        </div>
+                      </div>
+                      <p className="text-white/40 text-[10px] mt-2 italic">Note: Driver will return after drop based on your selected return schedule.</p>
+                    </div>
+                  )}
+
                   {/* GST Bill Optional (All Types) */}
-                  <div className="mt-2">
+                  <div className="mt-2 pt-2 border-t border-white/10">
                      <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl transition-colors hover:bg-black/30">
                         <input
                           type="checkbox"

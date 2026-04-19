@@ -529,6 +529,8 @@ export async function createOfflineBooking(formData) {
         packageId:     tripType === "RENTAL" ? formData.get("packageId") : null,
         pickupDate,
         pickupTime,
+        returnDate:    (tripType === "ROUND_TRIP" && formData.get("returnDate")) ? new Date(formData.get("returnDate")) : null,
+        returnTime:    tripType === "ROUND_TRIP" ? formData.get("returnTime") : null,
         amount:        totalFare,
         totalFare,
         paidAmount,
