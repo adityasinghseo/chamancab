@@ -117,7 +117,7 @@ export async function createBooking(formData) {
   });
 
   // ── Send Telegram Admin Alert ────────────────────────────
-  const message = `
+  let message = `
 🚨 <b>New ${tripType.replace('_', ' ')} Booking!</b>
 
 <b>Ref ID:</b> #${referenceId}
@@ -126,12 +126,15 @@ export async function createBooking(formData) {
 
 <b>Route:</b> ${booking.fromCity?.name || pickupAddress || 'N/A'} ➡️ ${booking.toCity?.name || dropAddress || 'N/A'}
 <b>Car:</b> ${booking.car?.name}
-<b>Date:</b> ${new Date(pickupDate).toLocaleDateString('en-IN')} at ${pickupTime}
+<b>Date:</b> ${new Date(pickupDate).toLocaleDateString('en-IN')} at ${pickupTime}`;
 
-<b>Amount:</b> ₹${totalFare.toLocaleString('en-IN')} (Paid: ₹${paidAmount.toLocaleString('en-IN')} via ${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Razorpay"})
-  `.trim();
+  if (tripType === "ROUND_TRIP" && returnDate) {
+    message += `\n<b>Return:</b> ${new Date(returnDate).toLocaleDateString('en-IN')} at ${returnTime}`;
+  }
 
-  await sendTelegramNotification(message, referenceId);
+  message += `\n\n<b>Amount:</b> ₹${totalFare.toLocaleString('en-IN')} (Paid: ₹${paidAmount.toLocaleString('en-IN')} via ${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Razorpay"})`;
+
+  await sendTelegramNotification(message.trim(), referenceId);
 
   // ── Redirect to confirmation ─────────────────────────────
   redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
