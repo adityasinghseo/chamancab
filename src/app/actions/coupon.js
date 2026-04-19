@@ -1,6 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { getUserSession } from "@/app/actions/auth";
+import { getSession } from "@/app/actions/auth";
 
 // Public validation
 export async function validateCoupon(code) {
@@ -33,8 +33,8 @@ export async function validateCoupon(code) {
 // ─────────────────────────────────────────────
 
 export async function getCoupons() {
-  const session = await getUserSession();
-  if (!session || session.role !== "ADMIN") return [];
+  const session = await getSession();
+  if (!session) return [];
   
   return await prisma.coupon.findMany({
     orderBy: { createdAt: "desc" }
@@ -42,8 +42,8 @@ export async function getCoupons() {
 }
 
 export async function createCoupon(formData) {
-  const session = await getUserSession();
-  if (!session || session.role !== "ADMIN") return { error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized" };
 
   try {
     const code = formData.get("code").trim().toUpperCase();
@@ -65,8 +65,8 @@ export async function createCoupon(formData) {
 }
 
 export async function updateCoupon(id, formData) {
-  const session = await getUserSession();
-  if (!session || session.role !== "ADMIN") return { error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized" };
 
   try {
     const code = formData.get("code").trim().toUpperCase();
@@ -91,8 +91,8 @@ export async function updateCoupon(id, formData) {
 }
 
 export async function deleteCoupon(id) {
-  const session = await getUserSession();
-  if (!session || session.role !== "ADMIN") return { error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized" };
 
   try {
     await prisma.coupon.delete({ where: { id } });
