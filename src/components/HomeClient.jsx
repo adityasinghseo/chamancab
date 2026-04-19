@@ -248,36 +248,41 @@ export default function HomeClient({ cities, packages }) {
                 
                 {/* Return Fields for Round Trip */}
                 {activeTab === "ROUND_TRIP" && (
-                  <>
-                    <div>
-                      <label className={labelClass}>
-                        <span className="material-symbols-outlined text-xs mr-1 align-middle">event_return</span>
-                        Return Date
-                      </label>
-                      <input
-                        required
-                        type="date"
-                        value={returnDate}
-                        min={pickupDate || new Date().toISOString().split("T")[0]}
-                        onChange={(e) => setReturnDate(e.target.value)}
-                        className={inputClass}
-                        suppressHydrationWarning
-                      />
+                  <div className="md:col-span-2 mt-2">
+                    <div className="pt-4 border-t border-white/10 mb-4">
+                       <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider">Return Details</p>
                     </div>
-                    <div>
-                      <label className={labelClass}>
-                        <span className="material-symbols-outlined text-xs mr-1 align-middle">history</span>
-                        Return Time
-                      </label>
-                      <input
-                        required
-                        type="time"
-                        value={returnTime}
-                        onChange={(e) => setReturnTime(e.target.value)}
-                        className={inputClass}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>
+                          <span className="material-symbols-outlined text-xs mr-1 align-middle">calendar_month</span>
+                          Return Date
+                        </label>
+                        <input
+                          required
+                          type="date"
+                          value={returnDate}
+                          min={pickupDate || new Date().toISOString().split("T")[0]}
+                          onChange={(e) => setReturnDate(e.target.value)}
+                          className={inputClass}
+                          suppressHydrationWarning
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>
+                          <span className="material-symbols-outlined text-xs mr-1 align-middle">history</span>
+                          Return Time
+                        </label>
+                        <input
+                          required
+                          type="time"
+                          value={returnTime}
+                          onChange={(e) => setReturnTime(e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 
