@@ -26,9 +26,16 @@ export async function createBooking(formData) {
   const pickupTime     = formData.get("pickupTime");
   const returnDate     = formData.get("returnDate") || null;
   const returnTime     = formData.get("returnTime") || null;
-  const totalFare      = parseFloat(formData.get("totalFare") || formData.get("amount"));
-  const paidAmount     = parseFloat(formData.get("paidAmount") || 0);
-  const paymentMethod  = formData.get("paymentMethod"); // "PAY_ON_PICKUP" | "RAZORPAY" | "OFFLINE"
+  const finalPriceRaw  = formData.get("finalPrice") || formData.get("price") || "0";
+  const amount         = parseFloat(finalPriceRaw);
+  
+  // Coupons
+  const couponCode      = formData.get("couponCode") || null;
+  const discountPercent = parseInt(formData.get("discountPercent")) || 0;
+  const discountAmount  = parseFloat(formData.get("discountAmount")) || 0;
+  const totalFare       = parseFloat(formData.get("price")) || amount;
+  const paidAmount      = parseFloat(formData.get("paidAmount") || 0);
+  const paymentMethod   = formData.get("paymentMethod"); // "PAY_ON_PICKUP" | "RAZORPAY" | "OFFLINE"
 
   // Customer info
   const customerName   = formData.get("customerName")?.trim();
@@ -81,8 +88,11 @@ export async function createBooking(formData) {
       pickupTime,
       returnDate: returnDate ? new Date(returnDate) : null,
       returnTime,
-      amount: totalFare,
+      amount,
       totalFare,
+      couponCode,
+      discountPercent,
+      discountAmount,
       paidAmount,
       status:        (isPaid || isAdminManual) ? "CONFIRMED" : "PENDING",
       paymentStatus,

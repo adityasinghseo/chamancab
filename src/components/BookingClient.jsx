@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Script from "next/script";
 import { createBooking } from "@/app/actions/booking";
 import { sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
+import { validateCoupon } from "@/app/actions/coupon";
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Local Rental" };
 const CAR_TYPE_ICONS = { Hatchback: "directions_car", Sedan: "directions_car", SUV: "airport_shuttle", MUV: "airport_shuttle" };
@@ -51,6 +52,12 @@ export default function BookingClient({ tripData, initialUser }) {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [pendingFormData, setPendingFormData] = useState(null);
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+
   // Strip country code helper – handles +91 / 91 prefix from autofill
   const cleanPhone = (raw = "") => {
     let v = raw.replace(/\D/g, "");
@@ -88,16 +95,46 @@ export default function BookingClient({ tripData, initialUser }) {
 
   // Price breakdown
   const basePrice = tripData.breakdown?.baseFare || price || 0;
-  // 'price' comes directly from URL which contains the fully rounded correct base total
-  let calculatedTotal = Number(price || basePrice);
-  let dynamicGst = 0;
+  const originalBaseTotal = Number(price || basePrice);
+  let calculatedTotal = originalBaseTotal;
 
+  // 1. Apply Coupon First
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    discountAmount = (calculatedTotal * appliedCoupon.discountPercent) / 100;
+    calculatedTotal -= discountAmount;
+  }
+
+  // 2. GST Calculation
+  let dynamicGst = 0;
   if (wantsGst) {
     dynamicGst = Math.round(calculatedTotal * 0.05);
     calculatedTotal += dynamicGst;
   }
 
   const totalAmount = Math.round(calculatedTotal);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+
+    const res = await validateCoupon(couponInput);
+    setCouponLoading(false);
+
+    if (res.error) {
+      setCouponError(res.error);
+    } else {
+      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountPercent: res.discountPercent });
+      setCouponError("");
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -221,8 +258,15 @@ export default function BookingClient({ tripData, initialUser }) {
             if (data.success) {
                fd.append("razorpayPaymentId", response.razorpay_payment_id);
                fd.append("paymentMethod", "RAZORPAY");
-               fd.append("totalFare", totalAmount);
+               fd.append("price", originalBaseTotal);
+               fd.append("finalPrice", totalAmount);
+               fd.append("totalFare", originalBaseTotal); // Fallback for old schema
                fd.append("paidAmount", paymentType === "PART" ? 500 : totalAmount);
+               if (appliedCoupon) {
+                 fd.append("couponCode", appliedCoupon.code);
+                 fd.append("discountPercent", appliedCoupon.discountPercent);
+                 fd.append("discountAmount", discountAmount);
+               }
                startTransition(() => { createBooking(fd); });
             } else {
                alert("Payment verification failed! Please contact support.");
@@ -296,7 +340,16 @@ export default function BookingClient({ tripData, initialUser }) {
                 <input type="hidden" name="fromName"    value={fromName || ""} />
                 <input type="hidden" name="toName"      value={toName || ""} />
                 <input type="hidden" name="amount"      value={totalAmount} />
+                <input type="hidden" name="finalPrice"  value={totalAmount} />
+                <input type="hidden" name="price"       value={originalBaseTotal} />
                 <input type="hidden" name="paymentMethod" value={paymentMethod} />
+                {appliedCoupon && (
+                  <>
+                    <input type="hidden" name="couponCode" value={appliedCoupon.code} />
+                    <input type="hidden" name="discountPercent" value={appliedCoupon.discountPercent} />
+                    <input type="hidden" name="discountAmount" value={discountAmount} />
+                  </>
+                )}
 
                 {/* Section 1: Passenger Details (Prefilled securely) */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4 relative overflow-hidden">
@@ -656,7 +709,7 @@ export default function BookingClient({ tripData, initialUser }) {
 
                   <div className="flex justify-between text-white/80">
                     <span>Base Fare</span>
-                    <span className="font-semibold">₹{Math.round(basePrice).toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">₹{Math.round(originalBaseTotal).toLocaleString("en-IN")}</span>
                   </div>
 
                   {tripData.breakdown?.nightCharge > 0 && (
@@ -674,7 +727,17 @@ export default function BookingClient({ tripData, initialUser }) {
                     <span>{dynamicGst > 0 ? `+ ₹${dynamicGst.toLocaleString("en-IN")}` : "Not applied"}</span>
                   </div>
 
-                  <div className="flex justify-between text-green-400 text-xs pt-1">
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-400 text-sm font-bold bg-green-500/10 p-2 rounded-lg -mx-2">
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">local_offer</span>
+                        Discount ({appliedCoupon.code})
+                      </span>
+                      <span>- ₹{Math.round(discountAmount).toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-green-400/80 text-xs pt-1">
                     <span className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">check</span>
                       Fuel & Driver
@@ -705,6 +768,55 @@ export default function BookingClient({ tripData, initialUser }) {
                       </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Apply Coupon Section */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                <h3 className="text-white font-black text-sm mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-xl">loyalty</span>
+                  Apply Coupon Code
+                </h3>
+                
+                {!appliedCoupon ? (
+                  <div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="ENTER CODE"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white uppercase focus:border-primary outline-none text-sm placeholder-white/30 tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponInput.trim()}
+                        className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-[#181611] px-5 font-black rounded-xl transition-all text-sm"
+                      >
+                        {couponLoading ? "..." : "APPLY"}
+                      </button>
+                    </div>
+                    {couponError && <p className="text-red-400 text-xs mt-2 font-medium">{couponError}</p>}
+                  </div>
+                ) : (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-green-400 font-bold text-sm flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                        Coupon Applied!
+                      </p>
+                      <p className="text-white/60 text-xs mt-0.5">Code <strong className="text-white">{appliedCoupon.code}</strong> applies {appliedCoupon.discountPercent}% OFF.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-red-400 hover:bg-red-400/10 p-1.5 rounded-lg transition-colors"
+                      title="Remove Coupon"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Trust badges */}

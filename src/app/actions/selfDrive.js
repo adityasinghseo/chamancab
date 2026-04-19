@@ -57,7 +57,6 @@ export async function estimateSelfDrivePrice(carId, pickupDatetime, dropDatetime
     totalHours: totalHours.toFixed(1),
     amount,
     deposit: car.deposit,
-    totalAmount: amount + car.deposit,
     charge 
   };
 }
@@ -73,6 +72,10 @@ export async function submitSelfDriveBooking(formData) {
   const pickupTime = formData.get("pickupTime");
   const returnDate = formData.get("returnDate");
   const returnTime = formData.get("returnTime");
+
+  const couponCode = formData.get("couponCode") || null;
+  const discountPercent = parseInt(formData.get("discountPercent")) || 0;
+  const discountAmount = parseFloat(formData.get("discountAmount")) || 0;
 
   const pickupFull = new Date(`${pickupDate}T${pickupTime}`);
   const returnFull = new Date(`${returnDate}T${returnTime}`);
@@ -120,8 +123,11 @@ export async function submitSelfDriveBooking(formData) {
       pickupTime,
       returnDate: returnFull,
       returnTime,
-      amount: est.charge,
+      amount: est.charge - discountAmount,
       deposit: est.deposit,
+      couponCode,
+      discountPercent,
+      discountAmount,
       userId: finalUserId,
       status: isPaid ? "CONFIRMED" : "PENDING",
       paymentStatus: isPaid ? "PAID_FULL" : "PENDING",
@@ -129,6 +135,8 @@ export async function submitSelfDriveBooking(formData) {
       razorpayPaymentId: razorpayPaymentId || null
     }
   });
+
+  const finalAmountToPay = est.charge - discountAmount;
 
   const message = `
 🚨 <b>New Self-Drive Booking!</b>
@@ -138,7 +146,7 @@ export async function submitSelfDriveBooking(formData) {
 <b>Phone:</b> ${customerPhone}
 
 <b>Pickup:</b> ${pickupLocation}
-<b>Amount:</b> ₹${est.charge.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit ${isPaid ? "(Paid Online via Razorpay)" : "(Unpaid)"}
+<b>Amount:</b> ₹${finalAmountToPay.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit ${isPaid ? "(Paid Online via Razorpay)" : "(Unpaid)"}
   `.trim();
 
   await sendTelegramNotification(message, referenceId);

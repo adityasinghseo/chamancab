@@ -24,7 +24,13 @@ export async function submitDriverBooking(formData) {
   const hoursMatch = driver.dutyHours.match(/\d+/);
   const totalHours = hoursMatch ? parseInt(hoursMatch[0]) : 8; // fallback to 8
   
-  const amount = totalHours * driver.costPerHour;
+  const baseAmount = totalHours * driver.costPerHour;
+  
+  const couponCode = formData.get("couponCode") || null;
+  const discountPercent = parseInt(formData.get("discountPercent")) || 0;
+  const discountAmount = parseFloat(formData.get("discountAmount")) || 0;
+  
+  const amount = baseAmount - discountAmount;
 
   // Fetch Session
   const session = await getUserSession();
@@ -59,6 +65,9 @@ export async function submitDriverBooking(formData) {
       startTime,
       totalHours,
       amount,
+      couponCode,
+      discountPercent,
+      discountAmount,
       userId: finalUserId,
       status: isPaid ? "CONFIRMED" : "PENDING",
       paymentStatus: isPaid ? "PAID_FULL" : "PENDING",

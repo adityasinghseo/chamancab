@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { getUserSession, sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
 import { submitSelfDriveBooking, estimateSelfDrivePrice } from "@/app/actions/selfDrive";
+import { validateCoupon } from "@/app/actions/coupon";
 
 function getCarImage(carName) {
   if (!carName) return null;
@@ -47,6 +48,34 @@ export default function SelfDriveClient({ cars }) {
 
   // Computed final booking state
   const [bookingSuccess, setBookingSuccess] = useState(null);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+
+    const res = await validateCoupon(couponInput);
+    setCouponLoading(false);
+
+    if (res.error) {
+      setCouponError(res.error);
+    } else {
+      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountPercent: res.discountPercent });
+      setCouponError("");
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   useEffect(() => {
     getUserSession().then((s) => {
@@ -114,6 +143,11 @@ export default function SelfDriveClient({ cars }) {
     fd.append("carId", selectedCar.id);
     if (session?.id && !fd.has("userId")) fd.append("userId", session.id);
 
+    if (appliedCoupon) {
+      fd.append("couponCode", appliedCoupon.code);
+      fd.append("discountPercent", appliedCoupon.discountPercent);
+    }
+
     setIsPaying(true);
 
     const pickupDateStr = fd.get("pickupDate");
@@ -148,10 +182,18 @@ export default function SelfDriveClient({ cars }) {
       }
 
       // 3. Create payment order
+      let discountAmount = 0;
+      if (appliedCoupon) {
+        discountAmount = (est.charge * appliedCoupon.discountPercent) / 100;
+      }
+      fd.append("discountAmount", discountAmount);
+
+      const finalAmountToPay = est.charge - discountAmount + est.deposit;
+
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: est.totalAmount }) // Base + Deposit
+        body: JSON.stringify({ amount: finalAmountToPay }) // Base + Deposit
       });
       const order = await orderRes.json();
       if (!order || !order.id) throw new Error("Order creation failed");
@@ -384,6 +426,55 @@ export default function SelfDriveClient({ cars }) {
                         <p className="text-xs text-white/60 mb-2">Final pricing will be calculated based on the block rules (12hr/24hr slices). Minimum billing applies.</p>
                         <p className="text-lg font-black text-white mb-1"><span className="text-primary font-bold">Base Tariff:</span> ₹{selectedCar.price12hr} <span className="text-sm font-medium text-white/50">(Min 12 Hours)</span></p>
                         <p className="text-sm font-bold text-white"><span className="text-red-400 font-bold">Mandatory Deposit:</span> ₹{selectedCar.deposit} <span className="font-normal text-white/50 font-medium">(Refundable)</span></p>
+                     </div>
+
+                     {/* Coupon */}
+                     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6">
+                        <h3 className="text-white font-black text-sm mb-3 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary text-xl">loyalty</span>
+                          Apply Coupon Code
+                        </h3>
+                        
+                        {!appliedCoupon ? (
+                          <div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="ENTER CODE"
+                                value={couponInput}
+                                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white uppercase focus:border-primary outline-none text-sm placeholder-white/30 tracking-wider"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyCoupon}
+                                disabled={couponLoading || !couponInput.trim()}
+                                className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-[#181611] px-5 font-black rounded-xl transition-all text-sm"
+                              >
+                                {couponLoading ? "..." : "APPLY"}
+                              </button>
+                            </div>
+                            {couponError && <p className="text-red-400 text-xs mt-2 font-medium">{couponError}</p>}
+                          </div>
+                        ) : (
+                          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center justify-between">
+                            <div>
+                              <p className="text-green-400 font-bold text-sm flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                Coupon Applied!
+                              </p>
+                              <p className="text-white/60 text-xs mt-0.5">Code <strong className="text-white">{appliedCoupon.code}</strong> applies {appliedCoupon.discountPercent}% OFF to the base rate.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={removeCoupon}
+                              className="text-red-400 hover:bg-red-400/10 p-1.5 rounded-lg transition-colors"
+                              title="Remove Coupon"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                          </div>
+                        )}
                      </div>
 
                      <button 

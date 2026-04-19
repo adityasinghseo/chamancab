@@ -218,8 +218,13 @@ model Booking {
 
   // Pricing
   amount     Float   // Legacy usage depending on structure
-  totalFare  Float   @default(0)
+  totalFare  Float   @default(0) // Pre-discount total
   paidAmount Float   @default(0)
+  
+  // Coupons
+  couponCode       String?
+  discountPercent  Int     @default(0)
+  discountAmount   Float   @default(0)
 
   // Statuses
   status        String @default("PENDING")   // PENDING | CONFIRMED | COMPLETED | CANCELLED
@@ -333,6 +338,11 @@ model SelfDriveBooking {
   amount          Float    // Estimated rent sum
   deposit         Float    @default(5000)
   
+  // Coupons
+  couponCode      String?
+  discountPercent Int      @default(0)
+  discountAmount  Float    @default(0)
+  
   status          String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
   paymentStatus   String   @default("PENDING")
   paymentMethod   String   @default("RAZORPAY")
@@ -375,7 +385,12 @@ model DriverBooking {
   startTime       String
 
   totalHours      Float    // e.g. 8, 12 based on the selection
-  amount          Float
+  amount          Float    // the original calculated amount
+  
+  // Coupons
+  couponCode      String?
+  discountPercent Int      @default(0)
+  discountAmount  Float    @default(0)
 
   status          String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
   paymentStatus   String   @default("PENDING")
@@ -422,4 +437,17 @@ model OfferBooking {
   razorpayPaymentId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// COUPONS
+// ─────────────────────────────────────────────
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int      // Percentage discount (e.g., 10 for 10%)
+  expiryDate      DateTime // Automatically invalid after this date
+  isActive        Boolean  @default(true) // Admin manual toggle
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

@@ -1,8 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getTopActiveCoupon } from "@/app/actions/coupon";
 
 export default function Header({ activePage = "" }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [topCoupon, setTopCoupon] = useState(null);
+
+  useEffect(() => {
+    getTopActiveCoupon().then(setTopCoupon);
+  }, []);
 
   const navLinks = [
     { href: "/", label: "Home", icon: "home" },
@@ -13,6 +19,12 @@ export default function Header({ activePage = "" }) {
 
   return (
     <>
+      {topCoupon && (
+        <div className="bg-primary text-[#181611] text-xs md:text-sm font-black py-2 px-4 text-center tracking-wide flex items-center justify-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">local_offer</span>
+          <span>Use code <span className="bg-[#181611] text-primary px-1.5 py-0.5 rounded uppercase tracking-widest">{topCoupon.code}</span> &amp; get {topCoupon.discountPercent}% OFF on your booking!</span>
+        </div>
+      )}
       <header className="bg-[#1e1a0e] border-b border-white/10 px-4 py-2 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo */}
