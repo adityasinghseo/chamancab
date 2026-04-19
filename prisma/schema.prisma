@@ -398,7 +398,7 @@ model Offer {
   time          String   // departure time e.g. "3:30 PM"
   price         Int      // discounted offer price
   originalPrice Int      // original price (for strikethrough)
-  seatsAvailable Int     @default(1)
+  carsAvailable Int      @default(1)
   validUntil    DateTime // auto-expire after this
   isActive      Boolean  @default(true)
   description   String?  // e.g. "Return trip - limited seats"
@@ -414,9 +414,10 @@ model OfferBooking {
   customerName  String
   customerPhone String
   customerEmail String?
-  seatsBooked   Int      @default(1)
+  carsBooked    Int      @default(1)
   status        String   @default("PENDING")
   paymentStatus String   @default("PENDING")
+  razorpayPaymentId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

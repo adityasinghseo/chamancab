@@ -92,8 +92,8 @@ export default function AdminOffersClient({ offers, bookings }) {
             </div>
 
             <div>
-              <label className={labelClass}>Seats Available *</label>
-              <input required name="seatsAvailable" type="number" defaultValue="1" min="1" className={inputClass} />
+              <label className={labelClass}>Cars Available *</label>
+              <input required name="carsAvailable" type="number" defaultValue="1" min="1" className={inputClass} />
             </div>
 
             {/* Offer validity datetime */}
@@ -105,7 +105,7 @@ export default function AdminOffersClient({ offers, bookings }) {
 
             <div className="md:col-span-2">
               <label className={labelClass}>Description (Optional)</label>
-              <input name="description" placeholder="e.g. Return trip – limited seats available" className={inputClass} />
+              <input name="description" placeholder="e.g. Return trip – limited cars available" className={inputClass} />
             </div>
           </div>
 
@@ -169,7 +169,7 @@ export default function AdminOffersClient({ offers, bookings }) {
                     )}
                   </div>
                   <p className="text-gray-400 text-sm">
-                    📅 {offer.date} &nbsp;·&nbsp; 🕐 {offer.time} &nbsp;·&nbsp; 💺 <b className="text-white">{offer.seatsAvailable} seats</b>
+                    📅 {offer.date} &nbsp;·&nbsp; 🕐 {offer.time} &nbsp;·&nbsp; 🚗 <b className="text-white">{offer.carsAvailable} cars</b>
                   </p>
                   {offer.description && (
                     <p className="text-gray-500 text-xs mt-1 italic">{offer.description}</p>
@@ -219,7 +219,7 @@ export default function AdminOffersClient({ offers, bookings }) {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-700">
               <tr>
-                {["Customer", "Route", "Date / Time", "Seats", "Status", "Action"].map(h => (
+                {["Customer", "Route", "Date / Time", "Cars", "Status", "Action"].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-black text-yellow-500 uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
@@ -233,7 +233,7 @@ export default function AdminOffersClient({ offers, bookings }) {
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-300">{b.offer.fromCity} → {b.offer.toCity}</td>
                   <td className="px-4 py-3 text-gray-400">{b.offer.date} {b.offer.time}</td>
-                  <td className="px-4 py-3 font-bold text-white text-center">{b.seatsBooked}</td>
+                  <td className="px-4 py-3 font-bold text-white text-center">{b.carsBooked}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-black ${
                       b.status === "CONFIRMED" ? "bg-green-900/40 text-green-400"

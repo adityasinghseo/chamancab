@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useTransition } from "react";
 import { getActiveOffers, initiateOfferBooking, confirmOfferBooking } from "@/app/actions/offers";
+import { verifyLoginOtp } from "@/app/actions/auth";
 
 export default function OfferPopup() {
   const [offers, setOffers] = useState([]);
@@ -13,6 +14,7 @@ export default function OfferPopup() {
   const [refId, setRefId] = useState("");
   const [isPending, startTransition] = useTransition();
   const [pendingData, setPendingData] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
     // Don't show again if dismissed this session
@@ -46,14 +48,81 @@ export default function OfferPopup() {
     });
   };
 
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const processRazorpayPayment = async (fd) => {
+    setIsPaying(true);
+    const res = await loadRazorpay();
+    if (!res) {
+       alert("Razorpay SDK failed to load. Are you online?");
+       setIsPaying(false);
+       return;
+    }
+
+    try {
+      const amount = offer.price;
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
+      });
+      const order = await orderRes.json();
+      if (!order || !order.id) throw new Error("Order creation failed");
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Chaman Cab",
+        description: `Offer: ${offer.fromCity} to ${offer.toCity}`,
+        order_id: order.id,
+        handler: function (response) {
+           fd.append("razorpayPaymentId", response.razorpay_payment_id);
+           startTransition(async () => {
+             const serverRes = await confirmOfferBooking(fd);
+             setIsPaying(false);
+             if (serverRes.error) alert(serverRes.error);
+             else {
+               setRefId(serverRes.referenceId);
+               setAuthStep(2);
+             }
+           });
+        },
+        modal: { ondismiss: () => setIsPaying(false) },
+        prefill: {
+          name: fd.get("customerName"),
+          contact: fd.get("customerPhone"),
+        },
+        theme: { color: "#fbb03b" },
+      };
+      
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      console.error(err);
+      alert("Payment initialization error.");
+      setIsPaying(false);
+    }
+  };
+
   const handleVerify = () => {
     const code = otpCode.join("");
     if (code.length < 4) return;
     startTransition(async () => {
-      const res = await confirmOfferBooking(pendingData, code);
-      if (res.error) { alert(res.error); return; }
-      setRefId(res.referenceId);
-      setAuthStep(2);
+      const phone = pendingData.get("customerPhone");
+      const otpRes = await verifyLoginOtp(phone, code);
+      if (otpRes?.error) { alert(otpRes.error); return; }
+      
+      processRazorpayPayment(pendingData);
     });
   };
 
@@ -120,9 +189,9 @@ export default function OfferPopup() {
                       />
                     ))}
                   </div>
-                  <button onClick={handleVerify} disabled={isPending || otpCode.join("").length < 4}
+                  <button onClick={handleVerify} disabled={isPending || isPaying || otpCode.join("").length < 4}
                     className="w-full bg-primary text-[#181611] font-black py-3.5 rounded-xl disabled:opacity-50 transition-all">
-                    {isPending ? "Verifying..." : "Confirm Booking"}
+                    {isPaying ? "Processing Payment..." : isPending ? "Verifying..." : "Verify & Pay"}
                   </button>
                 </div>
               ) : (
@@ -132,7 +201,6 @@ export default function OfferPopup() {
                   </h3>
                   <input required name="customerName" placeholder="Your Full Name" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none placeholder-white/30" />
                   <input required name="customerPhone" type="tel" minLength={10} maxLength={10} placeholder="Mobile Number (for OTP)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none placeholder-white/30" />
-                  <input name="customerEmail" type="email" placeholder="Email (optional)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none placeholder-white/30" />
                   <button type="submit" disabled={isPending} className="w-full bg-primary text-[#181611] font-black py-3.5 rounded-xl disabled:opacity-50">
                     {isPending ? "Sending OTP..." : "Send OTP & Book"}
                   </button>
@@ -165,9 +233,9 @@ export default function OfferPopup() {
                   <span className="material-symbols-outlined text-primary text-sm block mb-1">schedule</span>
                   <p className="text-white text-xs font-bold">{offer.time}</p>
                 </div>
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <span className="material-symbols-outlined text-primary text-sm block mb-1">event_seat</span>
-                  <p className="text-white text-xs font-bold">{offer.seatsAvailable} Seat{offer.seatsAvailable !== 1 ? "s" : ""}</p>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
+                  <span className="material-symbols-outlined text-red-400 text-sm block mb-1">directions_car</span>
+                  <p className="text-red-400 text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis">Only {offer.carsAvailable} Car{offer.carsAvailable !== 1 ? "s" : ""} Left</p>
                 </div>
               </div>
 

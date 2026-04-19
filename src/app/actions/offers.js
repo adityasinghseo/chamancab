@@ -28,7 +28,7 @@ export async function createOffer(formData) {
         time:          timeFormatted,
         price:         parseInt(formData.get("price")),
         originalPrice: parseInt(formData.get("originalPrice")),
-        seatsAvailable:parseInt(formData.get("seatsAvailable") || "1"),
+        carsAvailable: parseInt(formData.get("carsAvailable") || "1"),
         validUntil:    new Date(formData.get("validUntil")),
         description:   formData.get("description") || null,
         isActive:      true,
@@ -74,18 +74,16 @@ export async function initiateOfferBooking(formData) {
   return await sendLoginOtp(phone);
 }
 
-export async function confirmOfferBooking(formData, otpCode) {
+export async function confirmOfferBooking(formData) {
   const phone = formData.get("customerPhone");
-  const otpResult = await verifyLoginOtp(phone, otpCode);
-  if (otpResult.error) return { error: otpResult.error };
-
   const offerId = formData.get("offerId");
-  const seatsBooked = parseInt(formData.get("seatsBooked") || "1");
+  const carsBooked = parseInt(formData.get("carsBooked") || "1");
+  const rzpayId = formData.get("razorpayPaymentId");
 
-  // check seats
+  // check cars
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
-  if (!offer || offer.seatsAvailable < seatsBooked) {
-    return { error: "Not enough seats available." };
+  if (!offer || offer.carsAvailable < carsBooked) {
+    return { error: "Not enough cars available." };
   }
 
   const booking = await prisma.offerBooking.create({
@@ -93,15 +91,17 @@ export async function confirmOfferBooking(formData, otpCode) {
       offerId,
       customerName:  formData.get("customerName"),
       customerPhone: phone,
-      customerEmail: formData.get("customerEmail") || null,
-      seatsBooked,
+      carsBooked,
+      status: rzpayId ? "CONFIRMED" : "PENDING",
+      paymentStatus: rzpayId ? "PAID_FULL" : "PENDING",
+      razorpayPaymentId: rzpayId || null,
     },
   });
 
-  // Decrement seats
+  // Decrement cars
   await prisma.offer.update({
     where: { id: offerId },
-    data: { seatsAvailable: { decrement: seatsBooked } },
+    data: { carsAvailable: { decrement: carsBooked } },
   });
 
   revalidatePath("/admin/offers");
