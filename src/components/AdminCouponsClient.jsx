@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminCouponsClient({ initialCoupons }) {
   const router = useRouter();
-  const [coupons, setCoupons] = useState(initialCoupons);
+  const coupons = initialCoupons;
   const [isPending, startTransition] = useTransition();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
