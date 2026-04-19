@@ -630,16 +630,10 @@ export default function BookingClient({ tripData, initialUser }) {
                     <span>{formatTime(pickupTime)}</span>
                   </div>
                   {type === "ROUND_TRIP" && returnDate && (
-                    <>
-                      <div className="flex items-center gap-2 text-white/60 pt-1">
-                        <span className="material-symbols-outlined text-primary/70 text-base">event_return</span>
-                        <span suppressHydrationWarning>{formatDate(returnDate)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-white/60">
-                        <span className="material-symbols-outlined text-primary/70 text-base">history</span>
-                        <span>{formatTime(returnTime)}</span>
-                      </div>
-                    </>
+                    <div className="flex gap-2 text-white/60 pt-2 mt-2 border-t border-white/5">
+                      <span className="font-semibold text-primary/70 tracking-wide">Return:</span>
+                      <span suppressHydrationWarning>{formatDate(returnDate)}, {formatTime(returnTime)}</span>
+                    </div>
                   )}
                 </div>
               </div>

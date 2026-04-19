@@ -225,11 +225,9 @@ export default async function SearchPage({ searchParams }) {
               </div>
               {type === "ROUND_TRIP" && returnDate && (
                 <div className="flex items-center gap-1 inline-flex whitespace-nowrap overflow-hidden text-ellipsis w-full justify-end">
-                  <span className="material-symbols-outlined text-[12px] hidden md:block opacity-60">event_return</span>
+                  <span className="hidden md:block opacity-60 font-medium">Return:</span>
                   <span suppressHydrationWarning className="opacity-80">
-                    {new Date(returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    <span className="mx-1 opacity-30">·</span> 
-                    {formatTime(returnTime)}
+                    {new Date(returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, {formatTime(returnTime)}
                   </span>
                 </div>
               )}
