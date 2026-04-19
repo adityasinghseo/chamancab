@@ -104,7 +104,7 @@ export async function createBooking(formData) {
   // ── Create payment record ────────────────────────────────
   const booking = await prisma.booking.findUnique({ 
     where: { referenceId },
-    include: { car: true, fromCity: true, toCity: true }
+    include: { car: true, fromCity: true, toCity: true, package: true }
   });
   await prisma.payment.create({
     data: {
@@ -117,6 +117,13 @@ export async function createBooking(formData) {
   });
 
   // ── Send Telegram Admin Alert ────────────────────────────
+  let routeText = "";
+  if (tripType === "RENTAL") {
+    routeText = `${booking.fromCity?.name || pickupAddress || 'N/A'} (Package: ${booking.package?.name || 'Local'})`;
+  } else {
+    routeText = `${booking.fromCity?.name || pickupAddress || 'N/A'} ➡️ ${booking.toCity?.name || dropAddress || 'N/A'}`;
+  }
+
   let message = `
 🚨 <b>New ${tripType.replace('_', ' ')} Booking!</b>
 
@@ -124,8 +131,8 @@ export async function createBooking(formData) {
 <b>Customer:</b> ${customerName}
 <b>Phone:</b> ${customerPhone}
 
-<b>Route:</b> ${booking.fromCity?.name || pickupAddress || 'N/A'} ➡️ ${booking.toCity?.name || dropAddress || 'N/A'}
-<b>Car:</b> ${booking.car?.name}
+<b>Route:</b> ${routeText}
+<b>Car:</b> ${booking.car?.name || "N/A"}
 <b>Date:</b> ${new Date(pickupDate).toLocaleDateString('en-IN')} at ${pickupTime}`;
 
   if (tripType === "ROUND_TRIP" && returnDate) {

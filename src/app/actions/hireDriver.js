@@ -84,8 +84,8 @@ export async function submitDriverBooking(formData) {
 <b>Phone:</b> ${customerPhone}
 
 <b>Pickup:</b> ${pickupLocation}
-<b>Date:</b> ${startDate} at ${startTime}
-<b>Duty Hours:</b> ${totalHours} Hours
+<b>Schedule:</b> ${startFull.toLocaleDateString('en-IN')} at ${startTime}
+<b>Driver:</b> ${driver?.name || "Professional Driver"} (${totalHours} Hours)
 
 <b>Amount:</b> ₹${amount.toLocaleString('en-IN')} ${isPaid ? "(Paid Online via Razorpay)" : "(Cash / Unpaid)"}
   `.trim();

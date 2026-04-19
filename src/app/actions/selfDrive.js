@@ -137,6 +137,7 @@ export async function submitSelfDriveBooking(formData) {
   });
 
   const finalAmountToPay = est.charge - discountAmount;
+  const car = await prisma.selfDriveCar.findUnique({ where: { id: carId } });
 
   const message = `
 🚨 <b>New Self-Drive Booking!</b>
@@ -146,6 +147,8 @@ export async function submitSelfDriveBooking(formData) {
 <b>Phone:</b> ${customerPhone}
 
 <b>Pickup:</b> ${pickupLocation}
+<b>Vehicle:</b> ${car?.name || "Self Drive Car"}
+<b>Schedule:</b> ${pickupFull.toLocaleDateString('en-IN')} ${pickupTime} ➡️ ${returnFull.toLocaleDateString('en-IN')} ${returnTime}
 <b>Amount:</b> ₹${finalAmountToPay.toLocaleString('en-IN')} + ₹${est.deposit.toLocaleString('en-IN')} Deposit ${isPaid ? "(Paid Online via Razorpay)" : "(Unpaid)"}
   `.trim();
 
