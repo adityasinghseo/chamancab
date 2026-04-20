@@ -12,7 +12,7 @@ import LocationAutocomplete from "./LocationAutocomplete";
 import Footer from "./Footer";
 import Header from "./Header";
 
-export default function HomeClient({ cities, packages }) {
+export default function HomeClient({ cities, packages, reviewsData }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("ONE_WAY");
 
@@ -326,6 +326,53 @@ export default function HomeClient({ cities, packages }) {
           ))}
         </div>
       </div>
+
+      {/* ── GOOGLE REVIEWS ── */}
+      {reviewsData && reviewsData.reviews && reviewsData.reviews.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-16 border-t border-white/5">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+            <div className="text-center md:text-left">
+               <h3 className="text-white text-3xl font-black">What Our Customers Say</h3>
+               <p className="text-white/60 text-sm mt-2 font-medium">Real reviews from Google Maps</p>
+            </div>
+            <a 
+              href="https://maps.app.goo.gl/yThghqHGNrWEvANQ6"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 flex items-center gap-4 hover:border-primary/30 transition-colors group cursor-pointer"
+            >
+               <span className="text-white font-black text-3xl group-hover:text-primary transition-colors">{reviewsData.rating}</span>
+               <div className="flex flex-col">
+                 <div className="flex text-primary text-[14px]">
+                   {Array(Math.round(reviewsData.rating)).fill(0).map((_, i) => <span key={i} className="material-symbols-outlined">star</span>)}
+                 </div>
+                 <span className="text-white/50 text-xs mt-0.5 font-medium">{reviewsData.user_ratings_total} Google Reviews</span>
+               </div>
+            </a>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {reviewsData.reviews.slice(0, 3).map((review, idx) => (
+               <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-4 mb-5">
+                       <img src={review.profile_photo_url} alt={review.author_name} className="w-12 h-12 rounded-full" />
+                       <div>
+                         <p className="text-white font-bold text-sm">{review.author_name}</p>
+                         <p className="text-white/40 text-xs font-medium mt-0.5">{review.relative_time_description}</p>
+                       </div>
+                    </div>
+                    <div className="flex text-primary text-[15px] mb-3">
+                       {Array(review.rating).fill(0).map((_, i) => <span key={i} className="material-symbols-outlined">star</span>)}
+                    </div>
+                    <p className="text-white/80 text-sm leading-relaxed line-clamp-4 font-medium italic">"{review.text}"</p>
+                  </div>
+               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
