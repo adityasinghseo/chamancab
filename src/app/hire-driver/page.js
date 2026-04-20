@@ -3,9 +3,12 @@ import HireDriverClient from "@/components/HireDriverClient";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Hire a Professional Driver - Chaman Cab",
 };
+
 
 export default async function HireDriverPage() {
   const drivers = await prisma.driver.findMany({
