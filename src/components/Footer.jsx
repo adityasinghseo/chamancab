@@ -74,7 +74,7 @@ export default function Footer() {
                 </div>
                 <div className="w-full h-36 rounded-xl overflow-hidden border border-white/10 mt-1">
                   <iframe 
-                    src="https://maps.google.com/maps?q=Chaman%20tour%20and%20travels,%20Jagdishpur,%20Uttar%20Pradesh&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3575.2444652436444!2d81.54588167605963!3d26.49395797689913!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399a4b4e46480a4d%3A0x5eb6733390d1a1d7!2sChaman%20tour%20and%20travels!5e0!3m2!1sen!2sin!4v1713171300000!5m2!1sen!2sin" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0 }} 
