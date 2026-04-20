@@ -10,7 +10,7 @@ export const metadata = {
 export default async function HireDriverPage() {
   const drivers = await prisma.driver.findMany({
     where: { isActive: true },
-    orderBy: { costPerHour: "asc" }
+    orderBy: { halfDayPrice: "asc" }
   });
 
   return (
