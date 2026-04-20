@@ -63,3 +63,12 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* For Tailwind class scrollbar-hide used in review carousel */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

@@ -329,46 +329,143 @@ export default function HomeClient({ cities, packages, reviewsData }) {
 
       {/* ── GOOGLE REVIEWS ── */}
       {reviewsData && reviewsData.reviews && reviewsData.reviews.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 py-16 border-t border-white/5">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
-            <div className="text-center md:text-left">
-               <h3 className="text-white text-3xl font-black">What Our Customers Say</h3>
-               <p className="text-white/60 text-sm mt-2 font-medium">Real reviews from Google Maps</p>
-            </div>
-            <a 
-              href="https://maps.app.goo.gl/yThghqHGNrWEvANQ6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 flex items-center gap-4 hover:border-primary/30 transition-colors group cursor-pointer"
-            >
-               <span className="text-white font-black text-3xl group-hover:text-primary transition-colors">{reviewsData.rating}</span>
-               <div className="flex flex-col">
-                 <div className="flex text-primary text-[14px]">
-                   {Array(Math.round(reviewsData.rating)).fill(0).map((_, i) => <span key={i} className="material-symbols-outlined">star</span>)}
-                 </div>
-                 <span className="text-white/50 text-xs mt-0.5 font-medium">{reviewsData.user_ratings_total} Google Reviews</span>
-               </div>
-            </a>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reviewsData.reviews.slice(0, 3).map((review, idx) => (
-               <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-4 mb-5">
-                       <img src={review.profile_photo_url} alt={review.author_name} className="w-12 h-12 rounded-full" />
-                       <div>
-                         <p className="text-white font-bold text-sm">{review.author_name}</p>
-                         <p className="text-white/40 text-xs font-medium mt-0.5">{review.relative_time_description}</p>
-                       </div>
+        <div className="py-20 border-t border-white/5 overflow-hidden">
+          {/* Section Header */}
+          <div className="max-w-6xl mx-auto px-4 mb-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-primary text-xs font-bold uppercase tracking-widest">Verified Reviews</span>
+                  <span className="w-8 h-px bg-primary/40" />
+                </div>
+                <h3 className="text-white text-3xl md:text-4xl font-black leading-tight">
+                  What Our <span className="text-primary">Customers</span> Say
+                </h3>
+                <p className="text-white/50 text-sm mt-2">Fetched live from Google Maps · Updated daily</p>
+              </div>
+
+              {/* Rating Badge */}
+              <div className="flex items-center gap-5 shrink-0">
+                <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-white font-black text-4xl leading-none">{reviewsData.rating}</p>
+                    <div className="flex text-primary mt-1.5">
+                      {Array(Math.round(reviewsData.rating)).fill(0).map((_, i) => (
+                        <span key={i} className="material-symbols-outlined text-[16px]" style={{fontVariationSettings:"'FILL' 1"}}>star</span>
+                      ))}
                     </div>
-                    <div className="flex text-primary text-[15px] mb-3">
-                       {Array(review.rating).fill(0).map((_, i) => <span key={i} className="material-symbols-outlined">star</span>)}
-                    </div>
-                    <p className="text-white/80 text-sm leading-relaxed line-clamp-4 font-medium italic">"{review.text}"</p>
+                    <p className="text-white/40 text-[11px] font-medium mt-1">{reviewsData.user_ratings_total}+ reviews</p>
                   </div>
-               </div>
-            ))}
+                  <div className="w-px h-12 bg-white/10" />
+                  <div className="flex flex-col items-center gap-1">
+                    {/* Google G logo */}
+                    <svg className="w-7 h-7" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    <span className="text-white/40 text-[10px] font-bold uppercase tracking-wider">Google</span>
+                  </div>
+                </div>
+
+                {/* Add Review Button */}
+                <a
+                  href="https://search.google.com/local/writereview?placeid=ChIJTQpIRk5LmjkR16HRkDNztl4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-[#181611] font-bold text-sm px-5 py-4 rounded-2xl transition-all hover:shadow-lg hover:shadow-primary/30 active:scale-[.97] whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[20px]" style={{fontVariationSettings:"'FILL' 1"}}>rate_review</span>
+                  Add Your Review
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Review Cards */}
+          <div className="pl-4 sm:pl-[max(1rem,calc((100vw-72rem)/2+1rem))]">
+            <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollSnapType: "x mandatory" }}>
+              {reviewsData.reviews.map((review, idx) => (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 w-80 md:w-96 bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 hover:border-primary/40 hover:bg-white/8 transition-all duration-300"
+                  style={{ scrollSnapAlign: "start" }}
+                >
+                  {/* Header */}
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={review.profile_photo_url}
+                      alt={review.author_name}
+                      className="w-11 h-11 rounded-full ring-2 ring-white/10"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-sm truncate">{review.author_name}</p>
+                      <p className="text-white/40 text-xs font-medium mt-0.5">{review.relative_time_description}</p>
+                    </div>
+                    <svg className="w-5 h-5 shrink-0 opacity-60" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                  </div>
+
+                  {/* Stars */}
+                  <div className="flex gap-0.5">
+                    {Array(review.rating).fill(0).map((_, i) => (
+                      <span key={i} className="material-symbols-outlined text-primary text-[18px]" style={{fontVariationSettings:"'FILL' 1"}}>star</span>
+                    ))}
+                    {Array(5 - review.rating).fill(0).map((_, i) => (
+                      <span key={i} className="material-symbols-outlined text-white/20 text-[18px]">star</span>
+                    ))}
+                  </div>
+
+                  {/* Review Text */}
+                  <p className="text-white/75 text-sm leading-relaxed flex-1">
+                    &ldquo;{review.text}&rdquo;
+                  </p>
+
+                  {/* Footer */}
+                  <div className="pt-3 border-t border-white/10 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[14px] text-green-400" style={{fontVariationSettings:"'FILL' 1"}}>verified</span>
+                    <span className="text-white/30 text-[11px] font-medium">Verified Google Review</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* CTA Card at the end */}
+              <a
+                href="https://search.google.com/local/writereview?placeid=ChIJTQpIRk5LmjkR16HRkDNztl4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 w-64 border-2 border-dashed border-primary/30 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 group"
+                style={{ scrollSnapAlign: "start" }}
+              >
+                <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <span className="material-symbols-outlined text-primary text-2xl" style={{fontVariationSettings:"'FILL' 1"}}>rate_review</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-white font-bold text-sm">Share Your Experience</p>
+                  <p className="text-white/40 text-xs mt-1 leading-relaxed">Tap to write a review on Google</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+                  Add Review
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </div>
+              </a>
+
+              {/* Right padding spacer */}
+              <div className="flex-shrink-0 w-4 md:w-[max(1rem,calc((100vw-72rem)/2))]" />
+            </div>
+          </div>
+
+          {/* Scroll hint on mobile */}
+          <div className="flex justify-center mt-4 sm:hidden">
+            <p className="text-white/30 text-xs flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px]">swipe</span>
+              Swipe to see more reviews
+            </p>
           </div>
         </div>
       )}
