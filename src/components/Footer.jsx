@@ -60,16 +60,28 @@ export default function Footer() {
                 </div>
               </a>
 
-              <div className="flex items-start gap-4 pt-2">
-                <div className="bg-white/5 p-3 rounded-xl border border-white/10 mt-1">
-                  <span className="material-symbols-outlined text-white/70">location_on</span>
-                </div>
-                <div>
-                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-2">Our Locations</p>
-                  <div className="space-y-2">
-                    <p className="text-sm text-white/80"><span className="text-primary font-semibold">Head Office:</span> Lucknow</p>
-                    <p className="text-sm text-white/80 leading-relaxed"><span className="text-primary font-semibold">Branch Offices:</span> Jagdishpur, Amethi, Raebareli, Ayodhya, Barabanki, Sultanpur</p>
+              <div className="flex flex-col gap-4 pt-2">
+                <div className="flex items-start gap-4">
+                  <div className="bg-white/5 p-3 rounded-xl border border-white/10 mt-1">
+                    <span className="material-symbols-outlined text-white/70">location_on</span>
                   </div>
+                  <div>
+                    <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-2">Our Office</p>
+                    <p className="text-sm text-white/80 leading-relaxed">
+                      Road No 1, NH731, Bhel Road, Jagdishpur, Kamrauli, Uttar Pradesh 227817
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full h-36 rounded-xl overflow-hidden border border-white/10 mt-1">
+                  <iframe 
+                    src="https://maps.google.com/maps?q=Chaman%20tour%20and%20travels,%20Jagdishpur,%20Uttar%20Pradesh&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    allowFullScreen="" 
+                    loading="lazy" 
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
                 </div>
               </div>
             </div>
