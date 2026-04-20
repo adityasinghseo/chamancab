@@ -495,6 +495,14 @@ export async function createOfflineBooking(formData) {
       }
     });
   } else if (tripType === "DRIVER") {
+    const driver = await prisma.driver.findUnique({ where: { id: formData.get("driverId") } });
+    const bookingType = formData.get("bookingType") || "full_day";
+    const basePrice = bookingType === "half_day" ? (driver?.halfDayPrice ?? 500) : (driver?.fullDayPrice ?? 700);
+    const nightHrs = parseInt(pickupTime?.split(":")[0] || 0) * 60 + parseInt(pickupTime?.split(":")[1] || 0);
+    const nightChargeApplied = nightHrs >= 21 * 60 || nightHrs < 6 * 60;
+    const nightChargeAmount = nightChargeApplied ? (driver?.nightCharge ?? 200) : 0;
+    const computedAmount = totalFare || (basePrice + nightChargeAmount);
+
     await prisma.driverBooking.create({
       data: {
         referenceId,
@@ -505,8 +513,11 @@ export async function createOfflineBooking(formData) {
         pickupLocation: pickupLocationText,
         startDate: pickupDate,
         startTime: pickupTime,
-        totalHours: parseFloat(formData.get("totalHours") || 8),
-        amount: totalFare,
+        bookingType,
+        basePrice,
+        nightChargeApplied,
+        nightChargeAmount,
+        amount: computedAmount,
         status: "CONFIRMED",
         paymentStatus,
         paymentMethod: formData.get("paymentMethod") || "CASH",

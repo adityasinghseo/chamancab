@@ -359,15 +359,16 @@ model SelfDriveBooking {
 // DRIVERS & DRIVER BOOKINGS
 // ─────────────────────────────────────────────
 model Driver {
-  id           String   @id @default(cuid())
-  name         String
-  dutyHours    String   // e.g., "8 Hours", "12 Hours"
-  costPerHour  Float    
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  halfDayPrice  Float    @default(500)
+  fullDayPrice  Float    @default(700)
+  nightCharge   Float    @default(200)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
-  bookings     DriverBooking[]
+  bookings      DriverBooking[]
 }
 
 model DriverBooking {
@@ -384,8 +385,11 @@ model DriverBooking {
   startDate       DateTime
   startTime       String
 
-  totalHours      Float    // e.g. 8, 12 based on the selection
-  amount          Float    // the original calculated amount
+  bookingType         String   // "half_day" | "full_day"
+  basePrice           Float    // halfDayPrice or fullDayPrice
+  nightChargeApplied  Boolean  @default(false)
+  nightChargeAmount   Float    @default(0)
+  amount              Float    // final = basePrice + nightChargeAmount - discount
   
   // Coupons
   couponCode      String?

@@ -96,10 +96,13 @@ export default async function AdminBookingsPage() {
        paymentStatus: d.paymentStatus,
        paymentMethod: "CASH",
        createdAt: d.createdAt,
-       isSelfDrive: false,
-       isDriverOnly: true,
-       totalHours: d.totalHours,
-    }))
+        isSelfDrive: false,
+        isDriverOnly: true,
+        bookingType: d.bookingType,
+        basePrice: d.basePrice,
+        nightChargeApplied: d.nightChargeApplied,
+        nightChargeAmount: d.nightChargeAmount,
+     }))
   ];
 
   combinedBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

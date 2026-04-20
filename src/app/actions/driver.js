@@ -5,23 +5,25 @@ import { revalidatePath } from "next/cache";
 
 export async function createDriver(formData) {
   const name = formData.get("name");
-  const dutyHours = formData.get("dutyHours");
-  const costPerHour = parseFloat(formData.get("costPerHour"));
+  const halfDayPrice = parseFloat(formData.get("halfDayPrice")) || 500;
+  const fullDayPrice = parseFloat(formData.get("fullDayPrice")) || 700;
+  const nightCharge = parseFloat(formData.get("nightCharge")) || 200;
 
   await prisma.driver.create({
-    data: { name, dutyHours, costPerHour }
+    data: { name, halfDayPrice, fullDayPrice, nightCharge }
   });
   revalidatePath("/admin/drivers");
 }
 
 export async function updateDriver(id, formData) {
   const name = formData.get("name");
-  const dutyHours = formData.get("dutyHours");
-  const costPerHour = parseFloat(formData.get("costPerHour"));
+  const halfDayPrice = parseFloat(formData.get("halfDayPrice")) || 500;
+  const fullDayPrice = parseFloat(formData.get("fullDayPrice")) || 700;
+  const nightCharge = parseFloat(formData.get("nightCharge")) || 200;
 
   await prisma.driver.update({
     where: { id },
-    data: { name, dutyHours, costPerHour }
+    data: { name, halfDayPrice, fullDayPrice, nightCharge }
   });
   revalidatePath("/admin/drivers");
 }
