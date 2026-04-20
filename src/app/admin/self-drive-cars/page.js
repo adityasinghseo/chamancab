@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import AdminSelfDriveClient from "@/components/AdminSelfDriveClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Self Drive Cars — Admin",
 };
