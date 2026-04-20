@@ -16,7 +16,7 @@ const NAV = [
   { href: "/admin/drivers",    label: "Drivers",    icon: "person_search" },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useAdminTheme();
 
@@ -25,12 +25,27 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white dark:bg-[#1a1a1a] border-r border-gray-200 dark:border-white/10 flex-shrink-0 hidden lg:flex flex-col justify-between transition-colors duration-300 h-screen sticky top-0">
-      <div>
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-white/10">
-          <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-16 md:h-20 w-auto object-contain" />
-        </div>
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      <aside className={`fixed lg:sticky top-0 left-0 z-50 lg:z-10 w-64 bg-white dark:bg-[#1a1a1a] border-r border-gray-200 dark:border-white/10 flex-shrink-0 flex flex-col justify-between transition-transform duration-300 transform h-screen
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
+      `}>
+        <div className="overflow-y-auto flex-1">
+          {/* Logo */}
+          <div className="p-6 flex items-center justify-between gap-3 border-b border-gray-100 dark:border-white/10">
+            <img src="/CHAMANCAB-LOGO.webp" alt="Chaman Cab" className="h-12 lg:h-16 md:h-20 w-auto object-contain" />
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-2xl">close</span>
+            </button>
+          </div>
 
         {/* Nav */}
         <nav className="flex flex-col gap-1 p-4 mt-2">
@@ -40,6 +55,7 @@ export default function AdminSidebar() {
               <a
                 key={href}
                 href={href}
+                onClick={() => setIsOpen && setIsOpen(false)}
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-sm font-medium ${
                   isActive
                     ? "bg-primary text-[#181611] shadow-md shadow-primary/25 font-bold"
@@ -99,6 +115,7 @@ export default function AdminSidebar() {
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
