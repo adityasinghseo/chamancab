@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/app/actions/auth";
+import { revalidatePath } from "next/cache";
 
 // Public validation
 export async function validateCoupon(code) {
@@ -57,6 +58,7 @@ export async function createCoupon(formData) {
     await prisma.coupon.create({
       data: { code, discountPercent, expiryDate, isActive }
     });
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("createCoupon error:", error);
@@ -83,6 +85,7 @@ export async function updateCoupon(id, formData) {
       where: { id },
       data: { code, discountPercent, expiryDate, isActive }
     });
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("updateCoupon error:", error);
@@ -96,6 +99,7 @@ export async function deleteCoupon(id) {
 
   try {
     await prisma.coupon.delete({ where: { id } });
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("deleteCoupon error:", error);
