@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "./auth";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendBookingConfirmationSMS } from "@/lib/sms";
 
 function calculateHours(pickup, drop) {
   const diffMs = new Date(drop) - new Date(pickup);
@@ -153,6 +154,7 @@ export async function submitSelfDriveBooking(formData) {
   `.trim();
 
   await sendTelegramNotification(message, referenceId);
+  await sendBookingConfirmationSMS(customerPhone, referenceId);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

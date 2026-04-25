@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "./auth";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendBookingConfirmationSMS } from "@/lib/sms";
 
 export async function submitDriverBooking(formData) {
   const driverId = formData.get("driverId");
@@ -91,6 +92,7 @@ export async function submitDriverBooking(formData) {
   `.trim();
 
   await sendTelegramNotification(message, referenceId);
+  await sendBookingConfirmationSMS(customerPhone, referenceId);
 
   return { success: true, bookingId: booking.id, referenceId };
 }

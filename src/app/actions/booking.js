@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendBookingConfirmationSMS } from "@/lib/sms";
 
 // Generate a unique reference ID like CH-2024-001234
 function generateReferenceId() {
@@ -142,6 +143,7 @@ export async function createBooking(formData) {
   message += `\n\n<b>Amount:</b> ₹${totalFare.toLocaleString('en-IN')} (Paid: ₹${paidAmount.toLocaleString('en-IN')} via ${paymentMethod === "PAY_ON_PICKUP" ? "Cash" : "Razorpay"})`;
 
   await sendTelegramNotification(message.trim(), referenceId);
+  await sendBookingConfirmationSMS(customerPhone, referenceId);
 
   // ── Redirect to confirmation ─────────────────────────────
   redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
