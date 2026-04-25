@@ -253,9 +253,9 @@ export default async function SearchPage({ searchParams }) {
             <span className="material-symbols-outlined text-white/20 text-6xl block mb-4">support_agent</span>
             <p className="text-white/60 text-lg font-semibold">Contact for Price</p>
             <p className="text-white/40 text-sm mt-2">We don't have standard pricing for this exact route yet. Please call our support team to get a custom quote and book your trip.</p>
-            <a href="tel:+919876543210" className="inline-flex items-center gap-2 mt-6 bg-primary text-[#181611] font-bold px-6 py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-primary/30">
+            <a href="tel:+916386499107" className="inline-flex items-center gap-2 mt-6 bg-primary text-[#181611] font-bold px-6 py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-primary/30">
               <span className="material-symbols-outlined">call</span>
-              Call Now: +91 98765 43210
+              Call Now: +91 63864 99107
             </a>
           </div>
         ) : (
