@@ -66,7 +66,12 @@ export default function SelfDriveClient({ cars }) {
     if (res.error) {
       setCouponError(res.error);
     } else {
-      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountPercent: res.discountPercent });
+      setAppliedCoupon({ 
+        code: couponInput.trim().toUpperCase(), 
+        discountType: res.discountType,
+        discountPercent: res.discountPercent,
+        discountFlat: res.discountFlat 
+      });
       setCouponError("");
     }
   };
@@ -184,7 +189,11 @@ export default function SelfDriveClient({ cars }) {
       // 3. Create payment order
       let discountAmount = 0;
       if (appliedCoupon) {
-        discountAmount = (est.charge * appliedCoupon.discountPercent) / 100;
+        if (appliedCoupon.discountType === "FLAT") {
+          discountAmount = appliedCoupon.discountFlat;
+        } else {
+          discountAmount = (est.charge * appliedCoupon.discountPercent) / 100;
+        }
       }
       fd.append("discountAmount", discountAmount);
 
@@ -463,7 +472,7 @@ export default function SelfDriveClient({ cars }) {
                                 <span className="material-symbols-outlined text-[16px]">check_circle</span>
                                 Coupon Applied!
                               </p>
-                              <p className="text-white/60 text-xs mt-0.5">Code <strong className="text-white">{appliedCoupon.code}</strong> applies {appliedCoupon.discountPercent}% OFF to the base rate.</p>
+                              <p className="text-white/60 text-xs mt-0.5">Code <strong className="text-white">{appliedCoupon.code}</strong> applies {appliedCoupon.discountType === "FLAT" ? `₹${appliedCoupon.discountFlat}` : `${appliedCoupon.discountPercent}%`} OFF to the base rate.</p>
                             </div>
                             <button
                               type="button"

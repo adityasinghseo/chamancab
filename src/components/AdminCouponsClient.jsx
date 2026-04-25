@@ -13,7 +13,9 @@ export default function AdminCouponsClient({ initialCoupons }) {
 
   const initForm = {
     code: "",
+    discountType: "PERCENTAGE",
     discountPercent: "",
+    discountFlat: "",
     expiryDate: "",
     isActive: "true",
   };
@@ -29,7 +31,9 @@ export default function AdminCouponsClient({ initialCoupons }) {
     setEditingCoupon(cpn);
     setForm({
       code: cpn.code,
+      discountType: cpn.discountType || "PERCENTAGE",
       discountPercent: cpn.discountPercent.toString(),
+      discountFlat: cpn.discountFlat ? cpn.discountFlat.toString() : "",
       expiryDate: new Date(cpn.expiryDate).toISOString().split("T")[0],
       isActive: cpn.isActive ? "true" : "false",
     });
@@ -45,7 +49,9 @@ export default function AdminCouponsClient({ initialCoupons }) {
     e.preventDefault();
     const fd = new FormData();
     fd.append("code", form.code);
-    fd.append("discountPercent", form.discountPercent);
+    fd.append("discountType", form.discountType);
+    fd.append("discountPercent", form.discountType === "PERCENTAGE" ? form.discountPercent : "0");
+    fd.append("discountFlat", form.discountType === "FLAT" ? form.discountFlat : "0");
     fd.append("expiryDate", form.expiryDate);
     fd.append("isActive", form.isActive);
 
@@ -118,7 +124,9 @@ export default function AdminCouponsClient({ initialCoupons }) {
                           {c.code}
                         </span>
                       </td>
-                      <td className="p-4 text-white font-medium">{c.discountPercent}% OFF</td>
+                      <td className="p-4 text-white font-medium">
+                        {c.discountType === "FLAT" ? `₹${c.discountFlat} OFF` : `${c.discountPercent}% OFF`}
+                      </td>
                       <td className="p-4 text-white/70">
                         {new Date(c.expiryDate).toLocaleDateString("en-IN", {
                           day: "numeric", month: "short", year: "numeric",
@@ -177,17 +185,45 @@ export default function AdminCouponsClient({ initialCoupons }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-white/60 text-xs font-semibold uppercase tracking-wider mb-1.5">Discount Percentage (%) <span className="text-primary">*</span></label>
-                <input
-                  required
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={form.discountPercent}
-                  onChange={e => setForm({...form, discountPercent: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-white/60 text-xs font-semibold uppercase tracking-wider mb-1.5">Discount Type</label>
+                  <select
+                    value={form.discountType}
+                    onChange={e => setForm({...form, discountType: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FLAT">Flat Amount (₹)</option>
+                  </select>
+                </div>
+                
+                {form.discountType === "PERCENTAGE" ? (
+                  <div>
+                    <label className="block text-white/60 text-xs font-semibold uppercase tracking-wider mb-1.5">Discount (%) <span className="text-primary">*</span></label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={form.discountPercent}
+                      onChange={e => setForm({...form, discountPercent: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-white/60 text-xs font-semibold uppercase tracking-wider mb-1.5">Flat Discount (₹) <span className="text-primary">*</span></label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      value={form.discountFlat}
+                      onChange={e => setForm({...form, discountFlat: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

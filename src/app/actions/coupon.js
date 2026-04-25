@@ -22,7 +22,13 @@ export async function validateCoupon(code) {
       return { error: "Coupon Expired" };
     }
 
-    return { success: true, discountPercent: coupon.discountPercent, id: coupon.id };
+    return { 
+      success: true, 
+      discountType: coupon.discountType,
+      discountPercent: coupon.discountPercent, 
+      discountFlat: coupon.discountFlat,
+      id: coupon.id 
+    };
   } catch (error) {
     console.error("validateCoupon error:", error);
     return { error: "Failed to validate coupon" };
@@ -48,7 +54,9 @@ export async function createCoupon(formData) {
 
   try {
     const code = formData.get("code").trim().toUpperCase();
-    const discountPercent = parseInt(formData.get("discountPercent"));
+    const discountType = formData.get("discountType") || "PERCENTAGE";
+    const discountPercent = parseInt(formData.get("discountPercent")) || 0;
+    const discountFlat = parseFloat(formData.get("discountFlat")) || 0;
     const expiryDate = new Date(formData.get("expiryDate"));
     const isActive = formData.get("isActive") === "true";
 
@@ -56,7 +64,7 @@ export async function createCoupon(formData) {
     if (exists) return { error: "Coupon code already exists!" };
 
     await prisma.coupon.create({
-      data: { code, discountPercent, expiryDate, isActive }
+      data: { code, discountType, discountPercent, discountFlat, expiryDate, isActive }
     });
     revalidatePath("/", "layout");
     return { success: true };
@@ -72,7 +80,9 @@ export async function updateCoupon(id, formData) {
 
   try {
     const code = formData.get("code").trim().toUpperCase();
-    const discountPercent = parseInt(formData.get("discountPercent"));
+    const discountType = formData.get("discountType") || "PERCENTAGE";
+    const discountPercent = parseInt(formData.get("discountPercent")) || 0;
+    const discountFlat = parseFloat(formData.get("discountFlat")) || 0;
     const expiryDate = new Date(formData.get("expiryDate"));
     const isActive = formData.get("isActive") === "true";
 
@@ -83,7 +93,7 @@ export async function updateCoupon(id, formData) {
 
     await prisma.coupon.update({
       where: { id },
-      data: { code, discountPercent, expiryDate, isActive }
+      data: { code, discountType, discountPercent, discountFlat, expiryDate, isActive }
     });
     revalidatePath("/", "layout");
     return { success: true };
@@ -116,7 +126,7 @@ export async function getTopActiveCoupon() {
         expiryDate: { gt: new Date() }
       },
       orderBy: {
-        discountPercent: "desc"
+        createdAt: "desc"
       }
     });
     return coupon;

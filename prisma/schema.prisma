@@ -361,8 +361,8 @@ model SelfDriveBooking {
 model Driver {
   id            String   @id @default(cuid())
   name          String
-  halfDayPrice  Float    @default(500)
-  fullDayPrice  Float    @default(700)
+  dutyHours     String   @default("8 Hours")
+  costPerHour   Float    @default(100)
   nightCharge   Float    @default(200)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -449,7 +449,9 @@ model OfferBooking {
 model Coupon {
   id              String   @id @default(cuid())
   code            String   @unique
-  discountPercent Int      // Percentage discount (e.g., 10 for 10%)
+  discountType    String   @default("PERCENTAGE") // "PERCENTAGE" or "FLAT"
+  discountPercent Int      @default(0) // Percentage discount (e.g., 10 for 10%)
+  discountFlat    Float    @default(0) // Flat amount discount in rupees
   expiryDate      DateTime // Automatically invalid after this date
   isActive        Boolean  @default(true) // Admin manual toggle
   createdAt       DateTime @default(now())

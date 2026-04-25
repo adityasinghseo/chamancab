@@ -4,45 +4,33 @@ import { prisma } from "@/lib/prisma";
 import { getUserSession } from "./auth";
 import { sendTelegramNotification } from "@/lib/telegram";
 
-const NIGHT_CHARGE = 200;
-
-function isNightTime(timeStr) {
-  // timeStr is "HH:MM" in 24h format
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  const totalMins = hours * 60 + minutes;
-  // Night: 21:00 (1260) → 23:59 (1439) OR 00:00 (0) → 06:00 (360)
-  return totalMins >= 21 * 60 || totalMins < 6 * 60;
-}
-
 export async function submitDriverBooking(formData) {
   const driverId = formData.get("driverId");
   const customerName = formData.get("customerName");
   const customerPhone = formData.get("customerPhone");
   const customerEmail = formData.get("customerEmail");
   const pickupLocation = formData.get("pickupLocation");
+  
   const startDate = formData.get("startDate");
   const startTime = formData.get("startTime");
-  const bookingType = formData.get("bookingType"); // "half_day" | "full_day"
-
+  
   const startFull = new Date(`${startDate}T${startTime}`);
 
-  // Fetch driver
+  // Fetch driver to get cost/hour and calculate total
   const driver = await prisma.driver.findUnique({ where: { id: driverId } });
   if (!driver) return { error: "Selected driver not available." };
 
-  if (!bookingType || !["half_day", "full_day"].includes(bookingType)) {
-    return { error: "Please select a booking type (Half Day or Full Day)." };
-  }
-
-  const basePrice = bookingType === "half_day" ? driver.halfDayPrice : driver.fullDayPrice;
-  const nightChargeApplied = isNightTime(startTime);
-  const nightChargeAmount = nightChargeApplied ? driver.nightCharge : 0;
-
+  // Determine hours (simple parse from dutyHours like "12 Hours")
+  const hoursMatch = driver.dutyHours.match(/\d+/);
+  const totalHours = hoursMatch ? parseInt(hoursMatch[0]) : 8; // fallback to 8
+  
+  const baseAmount = totalHours * driver.costPerHour;
+  
   const couponCode = formData.get("couponCode") || null;
   const discountPercent = parseInt(formData.get("discountPercent")) || 0;
   const discountAmount = parseFloat(formData.get("discountAmount")) || 0;
-
-  const amount = basePrice + nightChargeAmount - discountAmount;
+  
+  const amount = baseAmount - discountAmount;
 
   // Fetch Session
   const session = await getUserSession();
@@ -75,10 +63,7 @@ export async function submitDriverBooking(formData) {
       pickupLocation,
       startDate: startFull,
       startTime,
-      bookingType,
-      basePrice,
-      nightChargeApplied,
-      nightChargeAmount,
+      totalHours,
       amount,
       couponCode,
       discountPercent,
@@ -91,7 +76,6 @@ export async function submitDriverBooking(formData) {
     }
   });
 
-  const bookingTypeLabel = bookingType === "half_day" ? "Half Day" : "Full Day";
   const message = `
 🚨 <b>New Driver Booking!</b>
 
@@ -101,13 +85,9 @@ export async function submitDriverBooking(formData) {
 
 <b>Pickup:</b> ${pickupLocation}
 <b>Schedule:</b> ${startFull.toLocaleDateString('en-IN')} at ${startTime}
-<b>Driver:</b> ${driver?.name || "Professional Driver"}
-<b>Booking Type:</b> ${bookingTypeLabel}
+<b>Driver:</b> ${driver?.name || "Professional Driver"} (${totalHours} Hours)
 
-<b>Base Price:</b> ₹${basePrice}
-<b>Night Charge:</b> ${nightChargeApplied ? `₹${nightChargeAmount} (Applied)` : "Not Applicable"}
-${discountAmount > 0 ? `<b>Discount:</b> -₹${discountAmount}` : ""}
-<b>Total Amount:</b> ₹${amount.toLocaleString('en-IN')} ${isPaid ? "(Paid Online via Razorpay)" : "(Cash / Unpaid)"}
+<b>Amount:</b> ₹${amount.toLocaleString('en-IN')} ${isPaid ? "(Paid Online via Razorpay)" : "(Cash / Unpaid)"}
   `.trim();
 
   await sendTelegramNotification(message, referenceId);

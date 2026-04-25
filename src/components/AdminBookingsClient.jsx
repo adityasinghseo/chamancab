@@ -512,17 +512,13 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                           <select name="driverId" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none shadow-sm shadow-indigo-500/10 border-indigo-200">
                             <option value="">Select professional driver...</option>
                             {drivers.map(d => (
-                              <option key={d.id} value={d.id}>{d.name} (Half ₹{d.halfDayPrice} / Full ₹{d.fullDayPrice})</option>
+                              <option key={d.id} value={d.id}>{d.name} ({d.dutyHours} - ₹{d.costPerHour}/hr)</option>
                             ))}
                           </select>
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Booking Type *</label>
-                          <select name="bookingType" required className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                            <option value="">Select type...</option>
-                            <option value="half_day">Half Day</option>
-                            <option value="full_day">Full Day</option>
-                          </select>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Total Hours Needed *</label>
+                          <input name="totalHours" type="number" step="0.5" required placeholder="e.g. 8" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary" />
                         </div>
                         <div className="col-span-2">
                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Meet Location *</label>
@@ -743,27 +739,6 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                             <div>
                               <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Report Address</p>
                               <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBooking.pickupLocationText}</p>
-                            </div>
-                          </div>
-                          <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-3 space-y-2">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pricing Breakdown</p>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Booking Type</span>
-                              <span className="font-bold text-white capitalize">{selectedBooking.bookingType === 'half_day' ? 'Half Day' : selectedBooking.bookingType === 'full_day' ? 'Full Day' : '—'}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Base Price</span>
-                              <span className="font-bold text-white">₹{selectedBooking.basePrice || selectedBooking.amount}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Night Charge</span>
-                              <span className={`font-bold ${selectedBooking.nightChargeApplied ? 'text-blue-400' : 'text-gray-500'}`}>
-                                {selectedBooking.nightChargeApplied ? `₹${selectedBooking.nightChargeAmount} (Applied)` : 'Not Applicable'}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm border-t border-white/10 pt-2">
-                              <span className="text-gray-500 font-bold">Total Amount</span>
-                              <span className="font-black text-primary">₹{selectedBooking.amount}</span>
                             </div>
                           </div>
                         </>

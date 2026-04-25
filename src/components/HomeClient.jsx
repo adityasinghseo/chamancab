@@ -344,8 +344,8 @@ export default function HomeClient({ cities, packages, reviewsData }) {
                 <p className="text-white/50 text-sm mt-2">Fetched live from Google Maps · Updated daily</p>
               </div>
 
-              {/* Rating Badge + CTA */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              {/* Rating Badge */}
+              <div className="flex items-center gap-5 shrink-0">
                 <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-4">
                   <div className="text-center">
                     <p className="text-white font-black text-4xl leading-none">{reviewsData.rating}</p>
@@ -374,7 +374,7 @@ export default function HomeClient({ cities, packages, reviewsData }) {
                   href="https://search.google.com/local/writereview?placeid=ChIJTQpIRk5LmjkR16HRkDNztl4"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-[#181611] font-bold text-sm px-5 py-4 rounded-2xl transition-all hover:shadow-lg hover:shadow-primary/30 active:scale-[.97] w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-[#181611] font-bold text-sm px-5 py-4 rounded-2xl transition-all hover:shadow-lg hover:shadow-primary/30 active:scale-[.97] whitespace-nowrap"
                 >
                   <span className="material-symbols-outlined text-[20px]" style={{fontVariationSettings:"'FILL' 1"}}>rate_review</span>
                   Add Your Review

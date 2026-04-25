@@ -101,8 +101,13 @@ export default function BookingClient({ tripData, initialUser }) {
   // 1. Apply Coupon First
   let discountAmount = 0;
   if (appliedCoupon) {
-    discountAmount = (calculatedTotal * appliedCoupon.discountPercent) / 100;
+    if (appliedCoupon.discountType === "FLAT") {
+      discountAmount = appliedCoupon.discountFlat;
+    } else {
+      discountAmount = (calculatedTotal * appliedCoupon.discountPercent) / 100;
+    }
     calculatedTotal -= discountAmount;
+    if (calculatedTotal < 0) calculatedTotal = 0;
   }
 
   // 2. GST Calculation
@@ -125,7 +130,12 @@ export default function BookingClient({ tripData, initialUser }) {
     if (res.error) {
       setCouponError(res.error);
     } else {
-      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountPercent: res.discountPercent });
+      setAppliedCoupon({ 
+        code: couponInput.trim().toUpperCase(), 
+        discountType: res.discountType,
+        discountPercent: res.discountPercent,
+        discountFlat: res.discountFlat
+      });
       setCouponError("");
     }
   };

@@ -79,28 +79,15 @@ export default function AdminDriverClient({ initialDrivers }) {
                   </div>
                 </div>
               </div>
-
+              
               <div className="space-y-2 mt-6">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">wb_sunny</span>
-                    Half Day Price
-                  </span>
-                  <span className="text-lg font-black text-primary">₹{drv.halfDayPrice}</span>
+                  <span className="text-gray-500 font-medium">Duty Hours</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{drv.dutyHours}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-100 dark:border-white/5">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                    Full Day Price
-                  </span>
-                  <span className="text-lg font-black text-primary">₹{drv.fullDayPrice}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-100 dark:border-white/5">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">nights_stay</span>
-                    Night Charge
-                  </span>
-                  <span className="font-bold text-blue-500 dark:text-blue-400">₹{drv.nightCharge}</span>
+                  <span className="text-gray-500 font-medium">Tariff Rate</span>
+                  <span className="text-lg font-black text-primary">₹{drv.costPerHour}/hr</span>
                 </div>
               </div>
             </div>
@@ -135,7 +122,7 @@ export default function AdminDriverClient({ initialDrivers }) {
          <div className="text-center py-20 bg-white dark:bg-surface-dark border border-gray-100 dark:border-white/10 rounded-3xl">
            <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-6xl mb-4">person_search</span>
            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No Drivers Registered</h3>
-           <p className="text-gray-500 max-w-md mx-auto text-sm">Add your driver inventory with half day and full day pricing.</p>
+           <p className="text-gray-500 max-w-md mx-auto text-sm">Add your driver inventory here including their duty hours and hourly tariff rates.</p>
            <button onClick={() => handleOpenModal()} className="mt-6 text-primary font-bold hover:underline">Add First Driver &rarr;</button>
          </div>
       )}
@@ -158,21 +145,16 @@ export default function AdminDriverClient({ initialDrivers }) {
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Driver Name</label>
                   <input required name="name" defaultValue={editingDriver?.name || ""} placeholder="e.g. Ramesh Kumar" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                </div>
-
+               
                <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Half Day Price (₹)</label>
-                    <input required min="0" step="1" type="number" name="halfDayPrice" defaultValue={editingDriver?.halfDayPrice ?? 500} placeholder="e.g. 500" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Duty Hours</label>
+                    <input required name="dutyHours" defaultValue={editingDriver?.dutyHours || ""} placeholder="e.g. 12 Hours" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                  </div>
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Full Day Price (₹)</label>
-                    <input required min="0" step="1" type="number" name="fullDayPrice" defaultValue={editingDriver?.fullDayPrice ?? 700} placeholder="e.g. 700" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Hourly Tariff (₹)</label>
+                    <input required min="0" step="0.01" type="number" name="costPerHour" defaultValue={editingDriver?.costPerHour || ""} placeholder="e.g. 100" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                  </div>
-               </div>
-
-               <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Night Charge (₹) — 9 PM to 6 AM</label>
-                  <input required min="0" step="1" type="number" name="nightCharge" defaultValue={editingDriver?.nightCharge ?? 200} placeholder="200" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                </div>
 
                <div className="pt-4 mt-6 border-t border-gray-100 dark:border-white/10 flex justify-end gap-3">

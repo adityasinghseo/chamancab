@@ -3,12 +3,9 @@ import SelfDriveClient from "@/components/SelfDriveClient";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
-export const dynamic = "force-dynamic";
-
 export const metadata = {
   title: "Self Drive Car Rentals - Chaman Cab",
 };
-
 
 export default async function SelfDrivePage() {
   const cars = await prisma.selfDriveCar.findMany({

@@ -22,7 +22,7 @@ export default function Header({ activePage = "" }) {
       {topCoupon && (
         <div className="bg-primary text-[#181611] text-xs md:text-sm font-black py-2 px-4 text-center tracking-wide flex items-center justify-center gap-2 w-full">
           <span className="material-symbols-outlined text-[16px]">local_offer</span>
-          <span>Use code <span className="bg-[#181611] text-primary px-1.5 py-0.5 rounded uppercase tracking-widest">{topCoupon.code}</span> &amp; get {topCoupon.discountPercent}% OFF on your booking!</span>
+          <span>Use code <span className="bg-[#181611] text-primary px-1.5 py-0.5 rounded uppercase tracking-widest">{topCoupon.code}</span> &amp; get {topCoupon.discountType === "FLAT" ? `₹${topCoupon.discountFlat}` : `${topCoupon.discountPercent}%`} OFF on your booking!</span>
         </div>
       )}
       <header className="bg-[#1e1a0e] border-b border-white/10 px-4 py-2 w-full relative">
