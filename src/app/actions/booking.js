@@ -13,6 +13,7 @@ function generateReferenceId() {
 }
 
 export async function createBooking(formData) {
+  try {
   // ── Extract form fields ──────────────────────────────────
   const carId          = formData.get("carId");
   const tripType       = formData.get("tripType");
@@ -145,8 +146,12 @@ export async function createBooking(formData) {
   await sendTelegramNotification(message.trim(), referenceId);
   await sendBookingConfirmationSMS(customerPhone, referenceId);
 
-  // ── Redirect to confirmation ─────────────────────────────
-  redirect(`/confirmation?ref=${referenceId}&phone=${encodeURIComponent(customerPhone)}`);
+  // ── Return success (client will redirect) ─────────────────────────────
+  return { success: true, referenceId, phone: customerPhone };
+  } catch (error) {
+    console.error("Booking Creation Error:", error);
+    return { error: error.message || "An unexpected error occurred during booking creation" };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

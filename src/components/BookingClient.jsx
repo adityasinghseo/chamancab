@@ -277,7 +277,21 @@ export default function BookingClient({ tripData, initialUser }) {
                  fd.append("discountPercent", appliedCoupon.discountPercent);
                  fd.append("discountAmount", discountAmount);
                }
-               startTransition(() => { createBooking(fd); });
+               startTransition(async () => { 
+                 try {
+                   const res = await createBooking(fd);
+                   if (res?.error) {
+                     alert("Booking failed: " + res.error + "\nIf payment was deducted, please contact support with Payment ID: " + response.razorpay_payment_id);
+                     setIsPaying(false);
+                   } else if (res?.success) {
+                     window.location.href = `/confirmation?ref=${res.referenceId}&phone=${encodeURIComponent(res.phone)}`;
+                   }
+                 } catch (err) {
+                   console.error(err);
+                   alert("Server connection failed. If payment was deducted, please contact support with Payment ID: " + response.razorpay_payment_id);
+                   setIsPaying(false);
+                 }
+               });
             } else {
                alert("Payment verification failed! Please contact support.");
                setIsPaying(false);
