@@ -5,7 +5,7 @@ import { updateBookingPayment } from "@/app/actions/booking";
 
 const PAYMENT_STATUS_LABELS = {
   PENDING:      { label: "Pending",        color: "text-yellow-400" },
-  PARTIAL_PAID: { label: "Partially Paid", color: "text-blue-400"   },
+  PARTIAL_PAID: { label: "Advance Paid", color: "text-blue-400"   },
   PAID_FULL:    { label: "Fully Paid",     color: "text-green-400"  },
   PAID_OFFLINE: { label: "Paid (Offline)", color: "text-green-400"  },
 };

@@ -14,7 +14,7 @@ const STATUS_CONFIG = {
 
 const PAY_STATUS_CONFIG = {
   PENDING:      { label: "Pending",        color: "text-yellow-500" },
-  PARTIAL_PAID: { label: "Partial Paid",   color: "text-blue-400"  },
+  PARTIAL_PAID: { label: "Advance Paid",   color: "text-blue-400"  },
   PAID_FULL:    { label: "Paid (Full)",    color: "text-green-500" },
   PAID_OFFLINE: { label: "Paid (Offline)", color: "text-green-500" },
   PAID:         { label: "Paid",           color: "text-green-500" }, // legacy
@@ -552,7 +552,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                           <option value="PENDING">Pending</option>
                           <option value="PAID_OFFLINE">Paid (Cash / Offline)</option>
                           <option value="PAID_FULL">Paid (Full)</option>
-                          <option value="PARTIAL_PAID">Partial Paid</option>
+                          <option value="PARTIAL_PAID">Advance Paid</option>
                         </select>
                       </div>
                     )}
@@ -646,7 +646,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                   >
                     <option value="PAID_OFFLINE">Paid (Offline / Cash)</option>
                     <option value="PAID_FULL">Paid (Full Online)</option>
-                    <option value="PARTIAL_PAID">Partial Paid</option>
+                    <option value="PARTIAL_PAID">Advance Paid</option>
                     <option value="PENDING">Pending</option>
                   </select>
                 </div>
