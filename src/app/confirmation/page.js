@@ -11,7 +11,8 @@ const STATUS_CONFIG = {
 
 const PAYMENT_LABELS = {
   PAY_ON_PICKUP: "Pay on Pickup (Cash/UPI to driver)",
-  RAZORPAY:      "Online Payment (Razorpay)",
+  RAZORPAY:      "Pay on Pickup (Cash/UPI to driver)",
+  OFFLINE:       "Pay on Pickup (Cash/UPI to driver)",
 };
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Local Rental" };
@@ -80,11 +81,9 @@ export default async function ConfirmationPage({ searchParams }) {
           <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full ${status.bg} border-2 ${status.border} mb-4`}>
             <span className={`material-symbols-outlined text-4xl ${status.text}`}>{status.icon}</span>
           </div>
-          <h1 className="text-white text-3xl font-black mb-1">Booking {status.label}!</h1>
+          <h1 className="text-white text-3xl font-black mb-1">Enquiry Received!</h1>
           <p className="text-white/50 text-sm">
-            {booking.status === "CONFIRMED"
-              ? "Your cab has been booked. The driver will contact you before pickup."
-              : "Your booking has been received."}
+            Your booking enquiry has been submitted. Our team will call you to confirm.
           </p>
         </div>
 
@@ -221,10 +220,8 @@ export default async function ConfirmationPage({ searchParams }) {
             <div>
               <p className="text-yellow-300 text-sm font-bold mb-1">What Happens Next?</p>
               <ul className="text-yellow-300/70 text-xs space-y-1.5">
-                <li>• Our team will call you within 1-2 hours to confirm the booking</li>
-                {booking.paymentMethod === "PAY_ON_PICKUP" && (
-                  <li>• Pay ₹{booking.amount.toLocaleString("en-IN")} directly to the driver (Cash or UPI)</li>
-                )}
+                <li>• Our team will call you within 1-2 hours to confirm your booking</li>
+                <li>• Pay ₹{booking.amount.toLocaleString("en-IN")} directly to the driver on the day of travel (Cash or UPI)</li>
                 <li>• Driver details will be shared 1 hour before your scheduled pickup</li>
                 <li>• For any queries, call us at <strong className="text-yellow-300">+91 63864 99107</strong></li>
               </ul>

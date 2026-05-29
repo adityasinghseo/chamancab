@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Script from "next/script";
 import { createBooking } from "@/app/actions/booking";
-import { sendLoginOtp, verifyLoginOtp } from "@/app/actions/auth";
-import { validateCoupon } from "@/app/actions/coupon";
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Local Rental" };
 const CAR_TYPE_ICONS = { Hatchback: "directions_car", Sedan: "directions_car", SUV: "airport_shuttle", MUV: "airport_shuttle" };
@@ -34,44 +31,43 @@ function formatTime(t) {
 }
 
 export default function BookingClient({ tripData, initialUser }) {
-  const { car, fromCity, toCity, pickupLoc, dropLoc, rentalPkg,
-          carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId,
-          packageId, pickupDate, pickupTime, returnDate: initReturnDate, returnTime: initReturnTime, fromName, toName } = tripData;
+  const {
+    car, fromCity, toCity, pickupLoc, dropLoc, rentalPkg,
+    carId, price, type, fromCityId, toCityId, pickupLocId, dropLocId,
+    packageId, pickupDate, pickupTime,
+    returnDate: initReturnDate, returnTime: initReturnTime,
+    fromName, toName,
+  } = tripData;
 
-  const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
-  const [paymentType, setPaymentType] = useState(type === "SELF_DRIVE" || type === "HIRE_DRIVER" ? "FULL" : "PART");
   const [isPending, startTransition] = useTransition();
-  const [isPaying, setIsPaying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [wantsGst, setWantsGst] = useState(false);
+  const [returnDate, setReturnDate] = useState(initReturnDate || "");
+  const [returnTime, setReturnTime] = useState(initReturnTime || "");
 
-  const [user, setUser] = useState(initialUser);
-
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpCode, setOtpCode] = useState(["", "", "", ""]);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState(null);
-
-  // Coupon state
-  const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [couponError, setCouponError] = useState("");
-  const [couponLoading, setCouponLoading] = useState(false);
-
-  // Strip country code helper – handles +91 / 91 prefix from autofill
+  // Strip country code helper
   const cleanPhone = (raw = "") => {
     let v = raw.replace(/\D/g, "");
     if (v.startsWith("91") && v.length > 10) v = v.slice(2);
     return v.slice(0, 10);
   };
-
-  const [returnDate, setReturnDate] = useState(initReturnDate || "");
-  const [returnTime, setReturnTime] = useState(initReturnTime || "");
   const [phoneVal, setPhoneVal] = useState(() => cleanPhone(initialUser?.phone || ""));
 
   const inputClass =
     "w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm";
   const labelClass = "block text-white/70 text-xs font-semibold uppercase tracking-wider mb-1.5";
+
+  // Price calculations (for display only)
+  const basePrice = tripData.breakdown?.baseFare || price || 0;
+  const originalBaseTotal = Number(price || basePrice);
+  let dynamicGst = 0;
+  let totalAmount = originalBaseTotal;
+  if (wantsGst) {
+    dynamicGst = Math.round(totalAmount * 0.05);
+    totalAmount += dynamicGst;
+  }
+  totalAmount = Math.round(totalAmount);
 
   function validate(fd) {
     const errs = {};
@@ -79,7 +75,7 @@ export default function BookingClient({ tripData, initialUser }) {
     const phone = fd.get("customerPhone")?.trim();
     if (!phone) errs.customerPhone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(phone.replace(/\s/g, ""))) errs.customerPhone = "Enter a valid 10-digit Indian mobile number";
-    
+
     if (type === "ROUND_TRIP") {
       const rd = fd.get("returnDate");
       const rt = fd.get("returnTime");
@@ -89,71 +85,9 @@ export default function BookingClient({ tripData, initialUser }) {
         errs.returnDate = "Return date must be same or after pickup date";
       }
     }
-    
+
     return errs;
   }
-
-  // Price breakdown
-  const basePrice = tripData.breakdown?.baseFare || price || 0;
-  const originalBaseTotal = Number(price || basePrice);
-  let calculatedTotal = originalBaseTotal;
-
-  // 1. Apply Coupon First
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.discountType === "FLAT") {
-      discountAmount = appliedCoupon.discountFlat;
-    } else {
-      discountAmount = (calculatedTotal * appliedCoupon.discountPercent) / 100;
-    }
-    calculatedTotal -= discountAmount;
-    if (calculatedTotal < 0) calculatedTotal = 0;
-  }
-
-  // 2. GST Calculation
-  let dynamicGst = 0;
-  if (wantsGst) {
-    dynamicGst = Math.round(calculatedTotal * 0.05);
-    calculatedTotal += dynamicGst;
-  }
-
-  const totalAmount = Math.round(calculatedTotal);
-
-  const handleApplyCoupon = async () => {
-    if (!couponInput.trim()) return;
-    setCouponLoading(true);
-    setCouponError("");
-
-    const res = await validateCoupon(couponInput);
-    setCouponLoading(false);
-
-    if (res.error) {
-      setCouponError(res.error);
-    } else {
-      setAppliedCoupon({ 
-        code: couponInput.trim().toUpperCase(), 
-        discountType: res.discountType,
-        discountPercent: res.discountPercent,
-        discountFlat: res.discountFlat
-      });
-      setCouponError("");
-    }
-  };
-
-  const removeCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponInput("");
-    setCouponError("");
-  };
-  const loadRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -161,157 +95,29 @@ export default function BookingClient({ tripData, initialUser }) {
     const errs = validate(fd);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
+    setIsSubmitting(true);
 
-    // Trigger OTP Flow
-    const enteredPhone = fd.get("customerPhone")?.replace(/\D/g, "");
+    // Always enquiry — no online payment
+    fd.append("paymentMethod", "PAY_ON_PICKUP");
+    fd.append("paidAmount", "0");
+    fd.append("price", originalBaseTotal);
+    fd.append("finalPrice", totalAmount);
 
-    // Only skip OTP if the user is already verified AND the phone matches their session
-    const sessionPhone = user?.phone?.replace(/\D/g, "");
-    const phoneMatchesSession = user && sessionPhone && (
-      sessionPhone === enteredPhone ||
-      sessionPhone === `91${enteredPhone}` ||
-      `91${sessionPhone}` === enteredPhone
-    );
-
-    if (phoneMatchesSession) {
-      fd.append("userId", user.id);
-      processBooking(fd);
-      return;
-    }
-
-    setPendingFormData(fd);
-    setIsPaying(true);
-    
-    const res = await sendLoginOtp(enteredPhone);
-    setIsPaying(false);
-
-    if (res?.error) {
-       alert(res.error);
-       return;
-    }
-
-    setOtpCode(["", "", "", ""]);
-    setShowOtp(true);
-  }
-
-  function processBooking(fd) {
-    // All online bookings must go through Razorpay
-    handleRazorpayPayment(fd);
-  }
-
-  async function handleVerifyOtp() {
-     const code = otpCode.join("");
-     if(code.length !== 4) return alert("Please enter the 4-digit OTP");
-
-     setVerifyingOtp(true);
-     const phone = pendingFormData.get("customerPhone");
-     const res = await verifyLoginOtp(phone, code);
-     setVerifyingOtp(false);
-
-     if (res?.error) {
-        return alert(res.error);
-     }
-
-     // Success!
-     pendingFormData.append("userId", res.user.id);
-     setUser(res.user);
-     setShowOtp(false);
-     processBooking(pendingFormData);
-  }
-
-  async function handleRazorpayPayment(fd) {
-    setIsPaying(true);
-    const res = await loadRazorpay();
-    if (!res) {
-      alert("Razorpay SDK failed to load. Are you online?");
-      setIsPaying(false);
-      return;
-    }
-
-    try {
-      // 1. Create order on our backend
-      const requestAmount = paymentType === "PART" ? 500 : totalAmount;
-      const orderRes = await fetch("/api/razorpay/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: requestAmount })
-      });
-      const order = await orderRes.json();
-
-      if (!order || !order.id) throw new Error("Order creation failed");
-
-      // 2. Open Razorpay options
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Chaman Cab",
-        description: "Cab Booking Transfer",
-        order_id: order.id,
-        prefill: {
-           name: fd.get("customerName"),
-           contact: fd.get("customerPhone"),
-        },
-        theme: { color: "#D2A645" }, 
-        handler: async function (response) {
-            // 3. Verify Payment
-            const verifyRes = await fetch("/api/razorpay/verify", {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-               })
-            });
-            const data = await verifyRes.json();
-            if (data.success) {
-               fd.append("razorpayPaymentId", response.razorpay_payment_id);
-               fd.append("paymentMethod", "RAZORPAY");
-               fd.append("price", originalBaseTotal);
-               fd.append("finalPrice", totalAmount);
-               fd.append("totalFare", originalBaseTotal); // Fallback for old schema
-               fd.append("paidAmount", paymentType === "PART" ? 500 : totalAmount);
-               if (appliedCoupon) {
-                 fd.append("couponCode", appliedCoupon.code);
-                 fd.append("discountPercent", appliedCoupon.discountPercent);
-                 fd.append("discountAmount", discountAmount);
-               }
-               startTransition(async () => { 
-                 try {
-                   const res = await createBooking(fd);
-                   if (res?.error) {
-                     alert("Booking failed: " + res.error + "\nIf payment was deducted, please contact support with Payment ID: " + response.razorpay_payment_id);
-                     setIsPaying(false);
-                   } else if (res?.success) {
-                     window.location.href = `/confirmation?ref=${res.referenceId}&phone=${encodeURIComponent(res.phone)}`;
-                   }
-                 } catch (err) {
-                   console.error(err);
-                   alert("Server connection failed. If payment was deducted, please contact support with Payment ID: " + response.razorpay_payment_id);
-                   setIsPaying(false);
-                 }
-               });
-            } else {
-               alert("Payment verification failed! Please contact support.");
-               setIsPaying(false);
-            }
+    startTransition(async () => {
+      try {
+        const res = await createBooking(fd);
+        if (res?.error) {
+          alert("Booking failed: " + res.error);
+          setIsSubmitting(false);
+        } else if (res?.success) {
+          window.location.href = `/confirmation?ref=${res.referenceId}&phone=${encodeURIComponent(res.phone)}`;
         }
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      
-      paymentObject.on('payment.failed', function (response){
-        alert("Payment Failed: " + response.error.description);
-        setIsPaying(false);
-      });
-
-      paymentObject.open();
-    } catch (e) {
-      console.error(e);
-      alert("Something went wrong initializing the payment.");
-      setIsPaying(false);
-    }
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong. Please try again.");
+        setIsSubmitting(false);
+      }
+    });
   }
 
   return (
@@ -334,7 +140,7 @@ export default function BookingClient({ tripData, initialUser }) {
             <span className="text-white/20 mx-1">──</span>
             <span className="flex items-center gap-1.5 text-white font-bold">
               <span className="w-6 h-6 rounded-full bg-primary text-[#181611] flex items-center justify-center font-black text-xs">2</span>
-              Book
+              Details
             </span>
             <span className="text-white/20 mx-1">──</span>
             <span className="flex items-center gap-1.5 text-white/40">
@@ -351,133 +157,94 @@ export default function BookingClient({ tripData, initialUser }) {
           {/* ── LEFT: Booking Form ── */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit}>
-                {/* Hidden fields */}
-                <input type="hidden" name="carId"       value={carId} />
-                <input type="hidden" name="tripType"    value={type} />
-                <input type="hidden" name="fromCityId"  value={fromCityId ?? ""} />
-                <input type="hidden" name="toCityId"    value={toCityId ?? ""} />
-                <input type="hidden" name="pickupLocId" value={pickupLocId ?? ""} />
-                <input type="hidden" name="dropLocId"   value={dropLocId ?? ""} />
-                <input type="hidden" name="packageId"   value={packageId ?? ""} />
-                <input type="hidden" name="pickupDate"  value={pickupDate} />
-                <input type="hidden" name="pickupTime"  value={pickupTime} />
-                <input type="hidden" name="fromName"    value={fromName || ""} />
-                <input type="hidden" name="toName"      value={toName || ""} />
-                <input type="hidden" name="amount"      value={totalAmount} />
-                <input type="hidden" name="finalPrice"  value={totalAmount} />
-                <input type="hidden" name="price"       value={originalBaseTotal} />
-                <input type="hidden" name="paymentMethod" value={paymentMethod} />
-                {appliedCoupon && (
-                  <>
-                    <input type="hidden" name="couponCode" value={appliedCoupon.code} />
-                    <input type="hidden" name="discountPercent" value={appliedCoupon.discountPercent} />
-                    <input type="hidden" name="discountAmount" value={discountAmount} />
-                  </>
-                )}
+              {/* Hidden fields */}
+              <input type="hidden" name="carId"       value={carId} />
+              <input type="hidden" name="tripType"    value={type} />
+              <input type="hidden" name="fromCityId"  value={fromCityId ?? ""} />
+              <input type="hidden" name="toCityId"    value={toCityId ?? ""} />
+              <input type="hidden" name="pickupLocId" value={pickupLocId ?? ""} />
+              <input type="hidden" name="dropLocId"   value={dropLocId ?? ""} />
+              <input type="hidden" name="packageId"   value={packageId ?? ""} />
+              <input type="hidden" name="pickupDate"  value={pickupDate} />
+              <input type="hidden" name="pickupTime"  value={pickupTime} />
+              <input type="hidden" name="fromName"    value={fromName || ""} />
+              <input type="hidden" name="toName"      value={toName || ""} />
+              <input type="hidden" name="amount"      value={totalAmount} />
 
-                {/* Section 1: Passenger Details (Prefilled securely) */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4 relative overflow-hidden">
-                  
-                  <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10 mt-2">
-                    <div className="bg-primary/20 rounded-xl p-2">
-                      <span className="material-symbols-outlined text-primary">person</span>
-                    </div>
-                    <div>
-                      <h2 className="text-white font-black text-lg">Passenger Details</h2>
-                      <p className="text-white/50 text-xs">Enter your booking contact details</p>
-                    </div>
+              {/* Section 1: Passenger Details */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4 relative overflow-hidden">
+                <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10 mt-2">
+                  <div className="bg-primary/20 rounded-xl p-2">
+                    <span className="material-symbols-outlined text-primary">person</span>
                   </div>
+                  <div>
+                    <h2 className="text-white font-black text-lg">Passenger Details</h2>
+                    <p className="text-white/50 text-xs">Enter your contact details to submit the enquiry</p>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Full Name */}
-                    <div>
-                      <label className={labelClass}>
-                        Full Name <span className="text-primary">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="customerName"
-                        autoComplete="name"
-                        defaultValue={user?.name || ""}
-                        placeholder="e.g. Rahul Kumar"
-                        className={`${inputClass} ${errors.customerName ? "border-red-500/70" : ""}`}
-                        required
-                      />
-                      {errors.customerName && <p className="text-red-400 text-xs mt-1">{errors.customerName}</p>}
-                    </div>
-
-                    {/* Phone (Editable) */}
-                    <div>
-                      <label className={labelClass}>
-                        Mobile <span className="text-primary">*</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-sm">+91</span>
-                        <input
-                          type="tel"
-                          name="customerPhone"
-                          autoComplete="tel-national"
-                          maxLength={10}
-                          placeholder="9876543210"
-                          value={phoneVal}
-                          className={`${inputClass} pl-12 text-white ${errors.customerPhone ? "border-red-500/70" : ""}`}
-                          required
-                          onChange={(e) => setPhoneVal(cleanPhone(e.target.value))}
-                        />
-                      </div>
-                      {errors.customerPhone && <p className="text-red-400 text-xs mt-1">{errors.customerPhone}</p>}
-                    </div>
-
-                  {/* Apply Coupon Section */}
+                <div className="grid grid-cols-1 gap-4">
+                  {/* Full Name */}
                   <div>
                     <label className={labelClass}>
-                      Apply Coupon Code
+                      Full Name <span className="text-primary">*</span>
                     </label>
-                    {!appliedCoupon ? (
-                      <div>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Enter coupon code"
-                            value={couponInput}
-                            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                            className="flex-1 bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white uppercase focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm placeholder-white/40 tracking-wider transition-all"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleApplyCoupon}
-                            disabled={couponLoading || !couponInput.trim()}
-                            className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-[#181611] px-6 font-black rounded-xl transition-all text-sm whitespace-nowrap"
-                          >
-                            {couponLoading ? "..." : "Apply"}
-                          </button>
-                        </div>
-                        {couponError && <p className="text-red-400 text-xs mt-2 font-medium">{couponError}</p>}
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={appliedCoupon.code}
-                            disabled
-                            className="flex-1 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 text-green-400 uppercase outline-none text-sm font-bold tracking-wider"
-                          />
-                          <button
-                            type="button"
-                            onClick={removeCoupon}
-                            className="bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 px-4 font-bold rounded-xl transition-all text-sm whitespace-nowrap flex items-center gap-1.5"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                            Remove Coupon
-                          </button>
-                        </div>
-                        <p className="text-green-400 text-xs mt-2 font-medium flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                          Coupon Applied Successfully!
-                        </p>
-                      </div>
-                    )}
+                    <input
+                      type="text"
+                      name="customerName"
+                      autoComplete="name"
+                      defaultValue={initialUser?.name || ""}
+                      placeholder="e.g. Rahul Kumar"
+                      className={`${inputClass} ${errors.customerName ? "border-red-500/70" : ""}`}
+                      required
+                    />
+                    {errors.customerName && <p className="text-red-400 text-xs mt-1">{errors.customerName}</p>}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className={labelClass}>
+                      Mobile <span className="text-primary">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-sm">+91</span>
+                      <input
+                        type="tel"
+                        name="customerPhone"
+                        autoComplete="tel-national"
+                        maxLength={10}
+                        placeholder="9876543210"
+                        value={phoneVal}
+                        className={`${inputClass} pl-12 text-white ${errors.customerPhone ? "border-red-500/70" : ""}`}
+                        required
+                        onChange={(e) => setPhoneVal(cleanPhone(e.target.value))}
+                      />
+                    </div>
+                    {errors.customerPhone && <p className="text-red-400 text-xs mt-1">{errors.customerPhone}</p>}
+                  </div>
+
+                  {/* Email (optional) */}
+                  <div>
+                    <label className={labelClass}>Email <span className="text-white/30">(Optional)</span></label>
+                    <input
+                      type="email"
+                      name="customerEmail"
+                      autoComplete="email"
+                      defaultValue={initialUser?.email || ""}
+                      placeholder="your@email.com"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Special Requests */}
+                  <div>
+                    <label className={labelClass}>Special Requests <span className="text-white/30">(Optional)</span></label>
+                    <textarea
+                      name="specialRequests"
+                      rows={2}
+                      placeholder="Any specific requirements or notes for the driver..."
+                      className={`${inputClass} resize-none`}
+                    />
                   </div>
 
                   {/* Return Fields for Round Trip */}
@@ -487,26 +254,26 @@ export default function BookingClient({ tripData, initialUser }) {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className={labelClass}>Return Date <span className="text-primary">*</span></label>
-                          <input 
-                            type="date" 
-                            name="returnDate" 
-                            value={returnDate} 
-                            onChange={e => setReturnDate(e.target.value)} 
-                            min={pickupDate} 
-                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnDate ? "border-red-500/70" : ""}`} 
-                            required 
+                          <input
+                            type="date"
+                            name="returnDate"
+                            value={returnDate}
+                            onChange={e => setReturnDate(e.target.value)}
+                            min={pickupDate}
+                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnDate ? "border-red-500/70" : ""}`}
+                            required
                           />
                           {errors.returnDate && <p className="text-red-400 text-xs mt-1">{errors.returnDate}</p>}
                         </div>
                         <div>
                           <label className={labelClass}>Return Time <span className="text-primary">*</span></label>
-                          <input 
-                            type="time" 
-                            name="returnTime" 
-                            value={returnTime} 
-                            onChange={e => setReturnTime(e.target.value)} 
-                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnTime ? "border-red-500/70" : ""}`} 
-                            required 
+                          <input
+                            type="time"
+                            name="returnTime"
+                            value={returnTime}
+                            onChange={e => setReturnTime(e.target.value)}
+                            className={`${inputClass} invert-0 dark:invert-[1] ${errors.returnTime ? "border-red-500/70" : ""}`}
+                            required
                           />
                           {errors.returnTime && <p className="text-red-400 text-xs mt-1">{errors.returnTime}</p>}
                         </div>
@@ -515,110 +282,20 @@ export default function BookingClient({ tripData, initialUser }) {
                     </div>
                   )}
 
-                  {/* GST Bill Optional (All Types) */}
+                  {/* GST Bill Optional */}
                   <div className="mt-2 pt-2 border-t border-white/10">
-                     <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl transition-colors hover:bg-black/30">
-                        <input
-                          type="checkbox"
-                          checked={wantsGst}
-                          onChange={(e) => setWantsGst(e.target.checked)}
-                          className="w-5 h-5 accent-primary rounded cursor-pointer"
-                        />
-                        <div className="flex-1">
-                           <p className="text-white font-bold text-sm">Need a GST Bill?</p>
-                           <p className="text-white/50 text-xs mt-0.5">Check this box to dynamically add 5% GST to your total amount.</p>
-                        </div>
-                     </label>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Section 2: Payment Method */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
-                <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10">
-                  <div className="bg-primary/20 rounded-xl p-2">
-                    <span className="material-symbols-outlined text-primary">payments</span>
-                  </div>
-                  <div>
-                    <h2 className="text-white font-black text-lg">Payment Method</h2>
-                    <p className="text-white/50 text-xs">How would you like to pay?</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {/* Pay ₹500 Advance & Book */}
-                  {type !== "SELF_DRIVE" && type !== "HIRE_DRIVER" && (
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType("PART")}
-                      className={`relative border rounded-xl p-4 text-left transition-all w-full ${
-                        paymentType === "PART"
-                          ? "border-primary bg-primary/20 ring-2 ring-primary/60 shadow-xl shadow-primary/10"
-                          : "border-white/15 hover:border-white/30 bg-white/5"
-                      }`}
-                    >
-                      {paymentType === "PART" && (
-                        <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-md">
-                          <span className="material-symbols-outlined text-[#181611] text-xs font-bold">check</span>
-                        </span>
-                      )}
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-primary/30 rounded-lg p-2 shadow-sm">
-                          <span className="material-symbols-outlined text-primary text-xl">payments</span>
-                        </div>
-                        <div>
-                          <p className="text-white font-bold text-sm">Pay ₹500 Advance & Book</p>
-                          <p className="text-white/60 text-xs mt-0.5 font-medium">Pay ₹{(totalAmount - 500).toLocaleString("en-IN")} remaining to driver</p>
-                        </div>
+                    <label className="flex items-center gap-3 cursor-pointer p-3 bg-black/20 border border-white/5 rounded-xl transition-colors hover:bg-black/30">
+                      <input
+                        type="checkbox"
+                        checked={wantsGst}
+                        onChange={(e) => setWantsGst(e.target.checked)}
+                        className="w-5 h-5 accent-primary rounded cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-sm">Need a GST Bill?</p>
+                        <p className="text-white/50 text-xs mt-0.5">Check this box to add 5% GST to your total estimate.</p>
                       </div>
-                      <p className="text-white/50 text-xs">Secure ₹500 advance now via Razorpay.</p>
-                    </button>
-                  )}
-
-                  {/* Full Payment */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("FULL")}
-                    className={`relative border rounded-xl p-4 text-left transition-all w-full ${
-                      paymentType === "FULL"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-white/15 hover:border-white/30 bg-white/5"
-                    }`}
-                  >
-                    {paymentType === "FULL" && (
-                      <span className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[#181611] text-xs">check</span>
-                      </span>
-                    )}
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-blue-500/20 rounded-lg p-2">
-                        <span className="material-symbols-outlined text-blue-400 text-xl">credit_card</span>
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-sm">Full Payment — ₹{totalAmount.toLocaleString("en-IN")}</p>
-                        <p className="text-white/50 text-xs">Card, UPI, Net Banking via Razorpay</p>
-                      </div>
-                    </div>
-                    <p className="text-white/40 text-xs">Pay 100% upfront. Secure & instant confirmation.</p>
-                  </button>
-
-                  {/* Payment Summary */}
-                  <div className="bg-white/5 rounded-xl p-3 border border-white/10 text-xs space-y-1.5">
-                    <div className="flex justify-between text-white/60">
-                      <span>Total Fare</span>
-                      <span className="text-white font-semibold">₹{totalAmount.toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="flex justify-between text-white/60">
-                      <span>Paying Now</span>
-                      <span className="text-primary font-bold">₹{(paymentType === "PART" ? 500 : totalAmount).toLocaleString("en-IN")}</span>
-                    </div>
-                    {paymentType === "PART" && (
-                      <div className="flex justify-between text-white/60">
-                        <span>Remaining (to driver)</span>
-                        <span className="text-yellow-400 font-semibold">₹{(totalAmount - 500).toLocaleString("en-IN")}</span>
-                      </div>
-                    )}
+                    </label>
                   </div>
                 </div>
               </div>
@@ -642,21 +319,25 @@ export default function BookingClient({ tripData, initialUser }) {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isPending || isPaying}
+                disabled={isPending || isSubmitting}
                 className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed text-[#181611] font-black text-base py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-primary/30 active:scale-[.98]"
               >
-                {(isPending || isPaying) ? (
+                {(isPending || isSubmitting) ? (
                   <>
                     <span className="w-5 h-5 border-2 border-[#181611]/30 border-t-[#181611] rounded-full animate-spin" />
-                    {isPaying ? "Processing Payment..." : "Confirming Booking..."}
+                    Submitting Enquiry...
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined">check_circle</span>
-                    Confirm Booking
+                    <span className="material-symbols-outlined">send</span>
+                    Submit Booking Enquiry
                   </>
                 )}
               </button>
+
+              <p className="text-center text-white/30 text-xs mt-3">
+                No payment required · Our team will call to confirm your booking
+              </p>
             </form>
           </div>
 
@@ -714,14 +395,12 @@ export default function BookingClient({ tripData, initialUser }) {
                     <span className="material-symbols-outlined text-primary/70 text-base mt-0.5 flex-shrink-0">location_on</span>
                     <div className="flex flex-col gap-1.5 min-w-0">
                       <span className="break-words leading-snug">{tripData.fromName || fromCity?.name || "—"}</span>
-                      
                       {(tripData.toName || toCity) && (
                         <div className="flex gap-2 items-start opacity-70">
                           <span className="material-symbols-outlined text-sm mt-0.5 flex-shrink-0">south_east</span>
                           <span className="break-words leading-snug">{tripData.toName || toCity?.name}</span>
                         </div>
                       )}
-                      
                       {rentalPkg && <span className="text-primary/80 font-semibold">{rentalPkg.name}</span>}
                     </div>
                   </div>
@@ -754,20 +433,20 @@ export default function BookingClient({ tripData, initialUser }) {
                 </div>
               </div>
 
-               {/* Price Breakdown */}
+              {/* Price Breakdown */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <h3 className="text-white/60 text-xs font-bold uppercase tracking-wider mb-4">Price Breakdown</h3>
+                <h3 className="text-white/60 text-xs font-bold uppercase tracking-wider mb-4">Fare Estimate</h3>
                 <div className="space-y-3 text-sm">
-                  
+
                   {type !== "RENTAL" && (
-                     <div className="flex justify-between text-white/50 text-xs pb-2 border-b border-white/5">
-                       <span>Distance Calculation</span>
-                       <span>
-                         {tripData.breakdown?.chargeDistance || 0} KM 
-                         {tripData.breakdown?.chargeDistance === 200 && " (Min. limit)"} 
-                         × ₹{tripData.breakdown?.baseFare / (tripData.breakdown?.chargeDistance || 1) || 0}
-                       </span>
-                     </div>
+                    <div className="flex justify-between text-white/50 text-xs pb-2 border-b border-white/5">
+                      <span>Distance Calculation</span>
+                      <span>
+                        {tripData.breakdown?.chargeDistance || 0} KM
+                        {tripData.breakdown?.chargeDistance === 200 && " (Min. limit)"}
+                        {" "}× ₹{tripData.breakdown?.baseFare / (tripData.breakdown?.chargeDistance || 1) || 0}
+                      </span>
+                    </div>
                   )}
 
                   <div className="flex justify-between text-white/80">
@@ -790,16 +469,6 @@ export default function BookingClient({ tripData, initialUser }) {
                     <span>{dynamicGst > 0 ? `+ ₹${dynamicGst.toLocaleString("en-IN")}` : "Not applied"}</span>
                   </div>
 
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-green-400 text-sm font-bold bg-green-500/10 p-2 rounded-lg -mx-2">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">local_offer</span>
-                        Discount ({appliedCoupon.code})
-                      </span>
-                      <span>- ₹{Math.round(discountAmount).toLocaleString("en-IN")}</span>
-                    </div>
-                  )}
-
                   <div className="flex justify-between text-green-400/80 text-xs pt-1">
                     <span className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">check</span>
@@ -807,33 +476,41 @@ export default function BookingClient({ tripData, initialUser }) {
                     </span>
                     <span>Included</span>
                   </div>
-                  
+
                   <div className="border-t border-white/10 pt-3 flex justify-between items-center">
-                    <span className="text-white font-bold">Total Payable</span>
+                    <span className="text-white font-bold">Estimated Fare</span>
                     <span className="text-primary font-black text-2xl">
                       ₹{Math.round(totalAmount).toLocaleString("en-IN")}
                     </span>
                   </div>
-                  
+
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mt-1">
+                    <p className="text-yellow-400/80 text-xs font-semibold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[14px]">info</span>
+                      Pay directly to the driver
+                    </p>
+                    <p className="text-yellow-300/60 text-[11px] mt-1">
+                      No online payment required. Our team will confirm and share driver details before pickup.
+                    </p>
+                  </div>
+
                   <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-3 text-[11px] text-white/50 leading-relaxed font-medium">
-                      <span className="material-symbols-outlined text-primary/70 text-[18px]">info</span>
-                      <div className="space-y-1.5 flex-1">
-                         {type === "ONE_WAY" ? (
-                           <>
-                             <p>• If the customer does not arrive within 10 minutes after the vehicle reaches the pickup location, waiting charges will apply at ₹2 per minute.</p>
-                             <p>• Toll tax, airport parking, and other parking charges are not included in the fare and will be charged additionally.</p>
-                             <p className="text-amber-400/80">• Driver allowance of ₹200 will be applicable for travel between 9:00 PM and 6:00 AM.</p>
-                             <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
-                           </>
-                         ) : (
-                           <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 200 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
-                         )}
-                      </div>
+                    <span className="material-symbols-outlined text-primary/70 text-[18px]">info</span>
+                    <div className="space-y-1.5 flex-1">
+                      {type === "ONE_WAY" ? (
+                        <>
+                          <p>• If the customer does not arrive within 10 minutes after the vehicle reaches the pickup location, waiting charges will apply at ₹2 per minute.</p>
+                          <p>• Toll tax, airport parking, and other parking charges are not included in the fare and will be charged additionally.</p>
+                          <p className="text-amber-400/80">• Driver allowance of ₹200 will be applicable for travel between 9:00 PM and 6:00 AM.</p>
+                          <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
+                        </>
+                      ) : (
+                        <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 200 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-
-
 
               {/* Trust badges */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
@@ -853,65 +530,9 @@ export default function BookingClient({ tripData, initialUser }) {
               </div>
             </div>
           </div>
+
         </div>
       </div>
-
-      {/* OTP Verification Modal */}
-      {showOtp && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1e1a0e] border border-white/10 rounded-2xl p-6 w-full max-w-sm relative">
-            <button type="button" onClick={() => setShowOtp(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
-              <span className="material-symbols-outlined">close</span>
-            </button>
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                <span className="material-symbols-outlined text-3xl">sms</span>
-              </div>
-              <h3 className="text-white font-black text-xl mb-1">Verify Mobile</h3>
-              <p className="text-white/50 text-sm">Enter the 4-digit code sent to +91 {pendingFormData?.get("customerPhone")}</p>
-            </div>
-            
-            <div className="flex justify-between gap-3 mb-6">
-              {[0, 1, 2, 3].map((idx) => (
-                <input
-                  key={idx}
-                  id={`otp-input-${idx}`}
-                  type="text"
-                  maxLength={1}
-                  value={otpCode[idx]}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/, '');
-                    const newOtp = [...otpCode];
-                    newOtp[idx] = val;
-                    setOtpCode(newOtp);
-                    if (val && idx < 3) {
-                      document.getElementById(`otp-input-${idx + 1}`).focus();
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Backspace" && !otpCode[idx] && idx > 0) {
-                      document.getElementById(`otp-input-${idx - 1}`).focus();
-                    } else if (e.key === "Enter") {
-                      if (idx === 3 && otpCode[3]) handleVerifyOtp();
-                    }
-                  }}
-                  className="w-14 h-14 bg-white/5 border border-white/15 rounded-xl text-center text-white text-2xl font-black focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                />
-              ))}
-            </div>
-
-            <button
-               type="button"
-               onClick={handleVerifyOtp}
-               disabled={verifyingOtp}
-               className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 text-[#181611] font-black py-4 rounded-xl transition-all"
-            >
-               {verifyingOtp ? "Verifying..." : "Verify & Book Now"}
-            </button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
