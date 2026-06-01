@@ -484,10 +484,10 @@ export default function BookingClient({ tripData, initialUser }) {
                     </span>
                   </div>
 
-                  {type === "RENTAL" && (
+                  {type === "RENTAL" && rentalPkg && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mt-4">
                       <p className="text-blue-400/80 text-[11px] leading-relaxed">
-                        <span className="font-semibold text-xs">Note:</span> If the selected rental package duration is exceeded, an additional charge of ₹100 per extra hour will apply. If the included distance limit is exceeded, an additional charge of ₹10 per extra kilometer will be applicable.
+                        <span className="font-semibold text-xs">Additional Charges:</span> Your selected package includes {rentalPkg.hours} hours and {rentalPkg.kilometers} km. Once either the included {rentalPkg.hours} hours or {rentalPkg.kilometers} km limit is exceeded, additional charges will apply at ₹100 per extra hour and ₹10 per extra kilometer thereafter.
                       </p>
                     </div>
                   )}
