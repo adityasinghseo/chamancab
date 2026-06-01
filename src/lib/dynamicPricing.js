@@ -67,7 +67,8 @@ export function calculatePriceBreakdown(
   pickupTimeStr,
   days = 1,
   fromCityId = null,
-  toCityId = null
+  toCityId = null,
+  nights = 0
 ) {
   
   if (tripType === "ONE_WAY") {
@@ -82,11 +83,11 @@ export function calculatePriceBreakdown(
   
   const baseFare = chargeDistance * rate;
 
-  // Night driver allowance: ₹300 if pickup is 9 PM – 6 AM
-  let nightCharge = 0;
-  if (pickupTimeStr) {
+  // Night driver allowance: ₹200 per night
+  let nightCharge = nights * 200;
+  if (nights === 0 && pickupTimeStr) {
     const [hours] = pickupTimeStr.split(":").map(Number);
-    if (hours >= 21 || hours < 6) nightCharge = 300;
+    if (hours >= 21 || hours < 6) nightCharge = 200;
   }
 
   // Final rounding to nearest ₹100

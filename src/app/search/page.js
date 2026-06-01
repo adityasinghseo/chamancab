@@ -97,11 +97,23 @@ export default async function SearchPage({ searchParams }) {
         const resolvedFromId = fromCityId || resolveCityId(fromName);
         const resolvedToId   = toCityId   || resolveCityId(toName);
 
+        let days = 1;
+        let nights = 0;
+        if (type === "ROUND_TRIP" && pickupDate && returnDate) {
+          const pDate = new Date(pickupDate);
+          const rDate = new Date(returnDate);
+          pDate.setHours(0,0,0,0);
+          rDate.setHours(0,0,0,0);
+          const diffDays = Math.round(Math.abs(rDate - pDate) / (1000 * 60 * 60 * 24));
+          days = diffDays + 1;
+          nights = diffDays;
+        }
+
         for (const car of activeCars) {
           // Pass raw one-way distance; the engine applies tier logic internally
           const breakdown = calculatePriceBreakdown(
-            car, osrm.distanceKm, type, pickupTime, 1,
-            resolvedFromId, resolvedToId
+            car, osrm.distanceKm, type, pickupTime, days,
+            resolvedFromId, resolvedToId, nights
           );
           if (breakdown) {
             carsWithPrices.push({ car, price: breakdown.totalPayable, breakdown });
@@ -333,7 +345,11 @@ export default async function SearchPage({ searchParams }) {
                     
                     <div className="mt-3 flex items-start gap-2 text-[11px] text-white/40 leading-snug">
                       <span className="material-symbols-outlined text-primary/50 text-[14px]">info</span>
-                      <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
+                      {type === "ROUND_TRIP" ? (
+                        <p>Note: Toll Tax, Airport Parking, Other Parking Charges, and Driver Night Charge of ₹200 per night (applicable between 9:00 PM and 6:00 AM) will be charged extra.</p>
+                      ) : (
+                        <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
+                      )}
                     </div>
                   </div>
 

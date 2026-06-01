@@ -492,15 +492,24 @@ export default function BookingClient({ tripData, initialUser }) {
                     </div>
                   )}
 
+                  {type === "ROUND_TRIP" && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mt-4">
+                      <p className="text-yellow-400/80 text-[11px] leading-relaxed">
+                        <span className="font-semibold text-xs">Note:</span> Toll Tax, Airport Parking, Other Parking Charges, and Driver Night Charge of ₹200 per night (applicable between 9:00 PM and 6:00 AM) are not included in the estimated fare and will be charged additionally.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-3 text-[11px] text-white/50 leading-relaxed font-medium">
                     <span className="material-symbols-outlined text-primary/70 text-[18px]">info</span>
                     <div className="space-y-1.5 flex-1">
-                      {type === "ONE_WAY" ? (
+                      {type === "ONE_WAY" && (
                         <>
                           <p>• If the customer does not arrive within 10 minutes after the vehicle reaches the pickup location, waiting charges will apply at ₹2 per minute.</p>
                           <p>• Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
                         </>
-                      ) : (
+                      )}
+                      {type !== "ONE_WAY" && type !== "ROUND_TRIP" && (
                         <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
                       )}
                     </div>
