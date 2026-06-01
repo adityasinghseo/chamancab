@@ -484,15 +484,7 @@ export default function BookingClient({ tripData, initialUser }) {
                     </span>
                   </div>
 
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mt-1">
-                    <p className="text-yellow-400/80 text-xs font-semibold flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[14px]">info</span>
-                      Pay directly to the driver
-                    </p>
-                    <p className="text-yellow-300/60 text-[11px] mt-1">
-                      No online payment required. Our team will confirm and share driver details before pickup.
-                    </p>
-                  </div>
+
 
                   <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-3 text-[11px] text-white/50 leading-relaxed font-medium">
                     <span className="material-symbols-outlined text-primary/70 text-[18px]">info</span>
