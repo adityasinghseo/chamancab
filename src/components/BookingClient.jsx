@@ -492,9 +492,7 @@ export default function BookingClient({ tripData, initialUser }) {
                       {type === "ONE_WAY" ? (
                         <>
                           <p>• If the customer does not arrive within 10 minutes after the vehicle reaches the pickup location, waiting charges will apply at ₹2 per minute.</p>
-                          <p>• Toll tax, airport parking, and other parking charges are not included in the fare and will be charged additionally.</p>
-                          <p className="text-amber-400/80">• Driver allowance of ₹200 will be applicable for travel between 9:00 PM and 6:00 AM.</p>
-                          <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
+                          <p>• Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
                         </>
                       ) : (
                         <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
