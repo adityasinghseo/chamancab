@@ -168,6 +168,19 @@ export async function updatePaymentStatus(id, paymentStatus, isSelfDrive = false
   revalidatePath("/admin/bookings");
 }
 
+export async function deleteBooking(id, isSelfDrive = false, isDriverOnly = false) {
+  if (isSelfDrive) {
+    await prisma.selfDriveBooking.delete({ where: { id } });
+  } else if (isDriverOnly) {
+    await prisma.driverBooking.delete({ where: { id } });
+  } else {
+    // Delete associated payment if it exists
+    await prisma.payment.deleteMany({ where: { bookingId: id } });
+    await prisma.booking.delete({ where: { id } });
+  }
+  revalidatePath("/admin/bookings");
+}
+
 // ─────────────────────────────────────────────────────────────
 // CITIES
 // ─────────────────────────────────────────────────────────────

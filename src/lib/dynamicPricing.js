@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * Calculate simple one-way fare based on exact distance or short trip fixed slabs
  */
-function calculateOneWayFare(car, exactDistance) {
+function calculateOneWayFare(car, exactDistance, pickupTimeStr) {
   const rate = car.perKmRateOneWay || 20;
 
   let fareExact = exactDistance * rate;
@@ -22,11 +22,21 @@ function calculateOneWayFare(car, exactDistance) {
      }
   }
 
+  let nightCharge = 0;
+  if (pickupTimeStr) {
+    const [hours] = pickupTimeStr.split(":").map(Number);
+    if (hours >= 21 || hours < 6) nightCharge = 200;
+  }
+
+  const basePayable = isShortSlab ? fareExact : Math.round(fareExact / 100) * 100;
+  const totalPayable = basePayable + nightCharge;
+
   return {
     ratePerKm: rate,
     chargeDistance: chargeDistance,
     baseFare: fareExact, // Unrounded exact base fare for display
-    totalPayable: isShortSlab ? fareExact : Math.round(fareExact / 100) * 100, // Do not round fixed fare slabs!
+    nightCharge: nightCharge,
+    totalPayable: totalPayable,
     pricingTier: isShortSlab ? "oneway_fixed_slab" : "oneway_exact"
   };
 }
@@ -61,7 +71,7 @@ export function calculatePriceBreakdown(
 ) {
   
   if (tripType === "ONE_WAY") {
-    return calculateOneWayFare(car, distance);
+    return calculateOneWayFare(car, distance, pickupTimeStr);
   }
 
   // --- Round Trip Logic ---
@@ -72,11 +82,11 @@ export function calculatePriceBreakdown(
   
   const baseFare = chargeDistance * rate;
 
-  // Night driver allowance: ₹300 if pickup is 10 PM – 6 AM
+  // Night driver allowance: ₹300 if pickup is 9 PM – 6 AM
   let nightCharge = 0;
   if (pickupTimeStr) {
     const [hours] = pickupTimeStr.split(":").map(Number);
-    if (hours >= 22 || hours < 6) nightCharge = 300;
+    if (hours >= 21 || hours < 6) nightCharge = 300;
   }
 
   // Final rounding to nearest ₹100

@@ -319,7 +319,7 @@ export default async function SearchPage({ searchParams }) {
                           <div>
                             <p className="text-white/40 mb-1">Night Charge</p>
                             <p className="text-amber-400 font-bold">+₹{breakdown.nightCharge}</p>
-                            <p className="text-white/30 text-[10px] mt-0.5">10 PM - 6 AM</p>
+                            <p className="text-white/30 text-[10px] mt-0.5">9 PM - 6 AM</p>
                           </div>
                         )}
                         {breakdown.gstAmount !== undefined && (
@@ -333,7 +333,7 @@ export default async function SearchPage({ searchParams }) {
                     
                     <div className="mt-3 flex items-start gap-2 text-[11px] text-white/40 leading-snug">
                       <span className="material-symbols-outlined text-primary/50 text-[14px]">info</span>
-                      <p>Toll tax, parking, and interstate charges are extra and to be paid as actuals. Time & distance calculated garage to garage.</p>
+                      <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
                     </div>
                   </div>
 

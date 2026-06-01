@@ -458,7 +458,7 @@ export default function BookingClient({ tripData, initialUser }) {
                     <div className="flex justify-between text-amber-400 text-sm">
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">nightlight</span>
-                        Night Allowance (10PM - 6AM)
+                        Night Allowance (9PM - 6AM)
                       </span>
                       <span className="font-semibold">+ ₹{tripData.breakdown.nightCharge}</span>
                     </div>
@@ -505,7 +505,7 @@ export default function BookingClient({ tripData, initialUser }) {
                           <p>• Any interstate charges (if applicable) will be extra and charged as per actuals.</p>
                         </>
                       ) : (
-                        <p>Terms: Rate does not include Toll Tax, Parking & Interstate charges (paid as actuals). Minimum 200 KM charged per day for outstation return trips. Time & distance computed garage to garage.</p>
+                        <p>Airport parking other parking and Driver night charge Rs. 200/- Will be applicable from 9:00 PM to 6:00 AM</p>
                       )}
                     </div>
                   </div>

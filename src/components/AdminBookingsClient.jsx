@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateBookingStatus, updatePaymentStatus, createOfflineBooking } from "@/app/actions/admin";
+import { updateBookingStatus, updatePaymentStatus, createOfflineBooking, deleteBooking } from "@/app/actions/admin";
 import { updateBookingPayment } from "@/app/actions/booking";
 
 // ─── Status configs ───────────────────────────────────────────────────────────
@@ -14,9 +14,9 @@ const STATUS_CONFIG = {
 
 const PAY_STATUS_CONFIG = {
   PENDING:      { label: "Pending",        color: "text-yellow-500" },
-  PARTIAL_PAID: { label: "Advance Paid",   color: "text-blue-400"  },
-  PAID_FULL:    { label: "Paid (Full)",    color: "text-green-500" },
-  PAID_OFFLINE: { label: "Paid (Offline)", color: "text-green-500" },
+  PARTIAL_PAID: { label: "Advance",   color: "text-blue-400"  },
+  PAID_FULL:    { label: "Paid",    color: "text-green-500" },
+  PAID_OFFLINE: { label: "Paid", color: "text-green-500" },
   PAID:         { label: "Paid",           color: "text-green-500" }, // legacy
   FAILED:       { label: "Failed",         color: "text-red-500"   },
 };
@@ -68,6 +68,20 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
     });
   };
 
+  const handleDeleteBooking = async (id, isSelfDrive, isDriverOnly) => {
+    if (window.confirm("Are you sure you want to permanently delete this booking?")) {
+      startTransition(async () => {
+        try {
+          await deleteBooking(id, isSelfDrive, isDriverOnly);
+          window.location.reload();
+        } catch (e) {
+          console.error(e);
+          alert("Failed to delete booking.");
+        }
+      });
+    }
+  };
+
   // Admin manual payment update
   async function handleManualPaymentUpdate() {
     if (!paymentModal) return;
@@ -83,8 +97,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   // WhatsApp link builder
   function openWhatsApp(booking) {
     const remaining = Math.max(0, (booking.totalFare || booking.amount) - (booking.paidAmount || 0));
-    const payLink   = `https://chamancab.com/pay/${booking.id}`;
-    const msg = `Hello ${booking.customerName},\n\nYour Chaman Cab booking is confirmed! 🚗\n\nBooking ID: ${booking.referenceId}\nRemaining Amount: ₹${remaining.toLocaleString("en-IN")}\n\nPlease complete your payment here:\n${payLink}\n\nThank you for choosing Chaman Cab! 🙏`;
+    const totalAmount = booking.totalFare || booking.amount || 0;
+    const msg = `Hello ${booking.customerName},\n\nYour booking has been confirmed! 🚗\nTotal Amount - ₹${totalAmount.toLocaleString("en-IN")}\nBooking ID: ${booking.referenceId}\nRemaining Amount: ₹${remaining.toLocaleString("en-IN")}`;
     const phone = (booking.customerPhone || "").replace(/\D/g, "");
     const waPhone = phone.startsWith("91") ? phone : `91${phone}`;
     window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -316,6 +330,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                               <button onClick={() => handleStatusChange(b.id, 'CONFIRMED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Confirmed</button>
                               <button onClick={() => handleStatusChange(b.id, 'COMPLETED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Completed</button>
                               <button onClick={() => handleStatusChange(b.id, 'CANCELLED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-gray-50 dark:hover:bg-white/5">✗ Cancel Trip</button>
+                              <div className="border-t border-gray-100 dark:border-white/10 my-1" />
+                              <button onClick={() => handleDeleteBooking(b.id, b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10">🗑 Delete Booking</button>
                               <div className="border-t border-gray-100 dark:border-white/10 my-1" />
                               <button onClick={() => handlePaymentStatusChange(b.id, 'PAID_FULL', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">₹ Mark Paid (Full)</button>
                               <button onClick={() => handlePaymentStatusChange(b.id, 'PAID_OFFLINE', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">₹ Mark Paid (Cash)</button>
@@ -549,10 +565,9 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                       <div>
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Status</label>
                         <select name="paymentStatus" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
+                          <option value="PARTIAL_PAID">Advance</option>
+                          <option value="PAID_FULL">Paid</option>
                           <option value="PENDING">Pending</option>
-                          <option value="PAID_OFFLINE">Paid (Cash / Offline)</option>
-                          <option value="PAID_FULL">Paid (Full)</option>
-                          <option value="PARTIAL_PAID">Advance Paid</option>
                         </select>
                       </div>
                     )}
@@ -560,10 +575,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                       <div>
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Method</label>
                         <select name="paymentMethod" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
-                          <option value="OFFLINE">Offline / Cash</option>
-                          <option value="UPI">UPI</option>
-                          <option value="RAZORPAY">Online (Razorpay)</option>
-                          <option value="PAY_ON_PICKUP">Pay on Pickup</option>
+                          <option value="CASH">Cash</option>
+                          <option value="ONLINE">Online</option>
                         </select>
                       </div>
                     )}
@@ -644,9 +657,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                     onChange={e => setManualPayStatus(e.target.value)}
                     className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
                   >
-                    <option value="PAID_OFFLINE">Paid (Offline / Cash)</option>
-                    <option value="PAID_FULL">Paid (Full Online)</option>
-                    <option value="PARTIAL_PAID">Advance Paid</option>
+                    <option value="PARTIAL_PAID">Advance</option>
+                    <option value="PAID_FULL">Paid</option>
                     <option value="PENDING">Pending</option>
                   </select>
                 </div>
