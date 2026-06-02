@@ -19,6 +19,11 @@ export default function AdminDriverClient({ initialDrivers }) {
     setModalOpen(false);
   };
 
+  const parseHours = (str) => {
+    const match = str?.match(/\d+/);
+    return match ? parseInt(match[0]) : 8;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -82,12 +87,12 @@ export default function AdminDriverClient({ initialDrivers }) {
               
               <div className="space-y-2 mt-6">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 font-medium">Duty Hours</span>
+                  <span className="text-gray-500 font-medium">Driver Type</span>
                   <span className="font-bold text-gray-900 dark:text-white">{drv.dutyHours}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-100 dark:border-white/5">
-                  <span className="text-gray-500 font-medium">Tariff Rate</span>
-                  <span className="text-lg font-black text-primary">₹{drv.costPerHour}/hr</span>
+                  <span className="text-gray-500 font-medium">Driver Price</span>
+                  <span className="text-lg font-black text-primary">₹{Math.round(drv.costPerHour * parseHours(drv.dutyHours))}</span>
                 </div>
               </div>
             </div>
@@ -122,7 +127,7 @@ export default function AdminDriverClient({ initialDrivers }) {
          <div className="text-center py-20 bg-white dark:bg-surface-dark border border-gray-100 dark:border-white/10 rounded-3xl">
            <span className="material-symbols-outlined text-gray-300 dark:text-white/10 text-6xl mb-4">person_search</span>
            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No Drivers Registered</h3>
-           <p className="text-gray-500 max-w-md mx-auto text-sm">Add your driver inventory here including their duty hours and hourly tariff rates.</p>
+           <p className="text-gray-500 max-w-md mx-auto text-sm">Add your driver inventory here including their types and pricing.</p>
            <button onClick={() => handleOpenModal()} className="mt-6 text-primary font-bold hover:underline">Add First Driver &rarr;</button>
          </div>
       )}
@@ -148,12 +153,17 @@ export default function AdminDriverClient({ initialDrivers }) {
                
                <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Duty Hours</label>
-                    <input required name="dutyHours" defaultValue={editingDriver?.dutyHours || ""} placeholder="e.g. 12 Hours" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Driver Type</label>
+                    <select required name="dutyHours" defaultValue={editingDriver?.dutyHours || ""} className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+                      <option value="" disabled>Select Type</option>
+                      <option value="Half Time Driver (8 Hours)">Half Time Driver (8 Hours)</option>
+                      <option value="Full Time Driver (12 Hours)">Full Time Driver (12 Hours)</option>
+                      <option value="Automatic Car Driver">Automatic Car Driver</option>
+                    </select>
                  </div>
                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Hourly Tariff (₹)</label>
-                    <input required min="0" step="0.01" type="number" name="costPerHour" defaultValue={editingDriver?.costPerHour || ""} placeholder="e.g. 100" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Driver Price (₹)</label>
+                    <input required min="0" step="0.01" type="number" name="price" defaultValue={editingDriver ? Math.round(editingDriver.costPerHour * parseHours(editingDriver.dutyHours)) : ""} placeholder="e.g. 500" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                  </div>
                </div>
 
