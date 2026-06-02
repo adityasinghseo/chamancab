@@ -89,6 +89,17 @@ export async function submitDriverBooking(formData) {
     }
   });
 
+  if (isPaid) {
+    await prisma.paymentTransaction.create({
+      data: {
+        referenceId,
+        amount,
+        paymentType: "Final Payment",
+        paymentMethod: "UPI"
+      }
+    });
+  }
+
   const message = `
 🚨 <b>New Driver Booking!</b>
 

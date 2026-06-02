@@ -118,6 +118,24 @@ export async function createBooking(formData) {
     },
   });
 
+  if (paidAmount > 0) {
+    let actualPaymentMethod = "Cash";
+    if (paymentMethod === "RAZORPAY" || razorpayPaymentId) {
+      actualPaymentMethod = "UPI";
+    }
+    const explicitMethod = formData.get("actualPaymentMethod");
+    if (explicitMethod) actualPaymentMethod = explicitMethod;
+
+    await prisma.paymentTransaction.create({
+      data: {
+        referenceId: booking.referenceId,
+        amount: paidAmount,
+        paymentType: "Advance",
+        paymentMethod: actualPaymentMethod
+      }
+    });
+  }
+
   // ── Send Telegram Admin Alert ────────────────────────────
   let routeText = "";
   if (tripType === "RENTAL") {
@@ -161,6 +179,7 @@ export async function updateBookingPayment(formData) {
   const bookingId      = formData.get("bookingId");
   const additionalPaid = parseFloat(formData.get("additionalPaid") || 0);
   const manualStatus   = formData.get("paymentStatus") || null;
+  const actualPaymentMethod = formData.get("actualPaymentMethod") || "Cash";
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking) throw new Error("Booking not found");
@@ -183,4 +202,19 @@ export async function updateBookingPayment(formData) {
         : booking.status,
     },
   });
+
+  if (additionalPaid > 0) {
+    let pType = "Partial Payment";
+    if (newPaidAmount >= booking.totalFare) pType = "Final Payment";
+    else if (booking.paidAmount === 0) pType = "Advance";
+
+    await prisma.paymentTransaction.create({
+      data: {
+        referenceId: booking.referenceId,
+        amount: additionalPaid,
+        paymentType: pType,
+        paymentMethod: actualPaymentMethod
+      }
+    });
+  }
 }

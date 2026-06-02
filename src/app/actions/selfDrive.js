@@ -138,6 +138,17 @@ export async function submitSelfDriveBooking(formData) {
   });
 
   const finalAmountToPay = est.charge - discountAmount;
+
+  if (isPaid) {
+    await prisma.paymentTransaction.create({
+      data: {
+        referenceId,
+        amount: finalAmountToPay,
+        paymentType: "Final Payment",
+        paymentMethod: "UPI"
+      }
+    });
+  }
   const car = await prisma.selfDriveCar.findUnique({ where: { id: carId } });
 
   const message = `

@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminBookingsPage() {
-  const [bookings, selfDriveBookings, driverBookings, cars, cities, packages, drivers, selfDriveCars] = await Promise.all([
+  const [bookings, selfDriveBookings, driverBookings, cars, cities, packages, drivers, selfDriveCars, paymentTransactions] = await Promise.all([
     prisma.booking.findMany({
       include: {
         car:            true,
@@ -50,10 +50,13 @@ export default async function AdminBookingsPage() {
       where: { isActive: true },
       orderBy: { name: "asc" },
     }),
+    prisma.paymentTransaction.findMany({
+      orderBy: { createdAt: "desc" }
+    })
   ]);
 
   const combinedBookings = [
-    ...bookings.map(b => ({ ...b, isSelfDrive: false, isDriverOnly: false })),
+    ...bookings.map(b => ({ ...b, isSelfDrive: false, isDriverOnly: false, paymentTransactions: paymentTransactions.filter(pt => pt.referenceId === b.referenceId) })),
     ...selfDriveBookings.map(s => ({
        id: s.id,
        referenceId: s.referenceId,
@@ -77,6 +80,7 @@ export default async function AdminBookingsPage() {
        deposit: s.deposit,
        returnDate: s.returnDate,
        returnTime: s.returnTime,
+       paymentTransactions: paymentTransactions.filter(pt => pt.referenceId === s.referenceId),
     })),
     ...driverBookings.map(d => ({
        id: d.id,
@@ -99,6 +103,7 @@ export default async function AdminBookingsPage() {
        isSelfDrive: false,
        isDriverOnly: true,
        totalHours: d.totalHours,
+       paymentTransactions: paymentTransactions.filter(pt => pt.referenceId === d.referenceId),
     }))
   ];
 

@@ -556,5 +556,16 @@ export async function createOfflineBooking(formData) {
     });
   }
 
+  if (paidAmount > 0) {
+    await prisma.paymentTransaction.create({
+      data: {
+        referenceId,
+        amount: paidAmount,
+        paymentType: "Advance",
+        paymentMethod: formData.get("paymentMethod") === "ONLINE" ? "UPI" : "Cash"
+      }
+    });
+  }
+
   revalidatePath("/admin/bookings");
 }

@@ -33,6 +33,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   // Payment update state
   const [manualPayStatus, setManualPayStatus] = useState("PAID_OFFLINE");
   const [manualAmount, setManualAmount]   = useState("");
+  const [manualPayMethod, setManualPayMethod] = useState("Cash");
   const [paySuccess, setPaySuccess]       = useState(false);
 
   // Offline booking creation
@@ -89,6 +90,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
     fd.append("bookingId", paymentModal.id);
     fd.append("additionalPaid", parseFloat(manualAmount) || 0);
     fd.append("paymentStatus", manualPayStatus);
+    fd.append("actualPaymentMethod", manualPayMethod);
     await updateBookingPayment(fd);
     setPaySuccess(true);
     setTimeout(() => { setPaySuccess(false); setPaymentModal(null); window.location.reload(); }, 1500);
@@ -312,8 +314,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
 
                           {/* Manual payment update — only for non-self-drive standard bookings */}
                           {!b.isSelfDrive && !b.isDriverOnly && (
-                            <button
-                              onClick={() => { setPaymentModal(b); setManualAmount(""); setManualPayStatus("PAID_OFFLINE"); setPaySuccess(false); }}
+                            <button 
+                              onClick={() => { setPaymentModal(b); setManualAmount(""); setManualPayStatus("PAID_OFFLINE"); setManualPayMethod("Cash"); setPaySuccess(false); }}
                               title="Update Payment"
                               className="p-1.5 rounded-lg border border-gray-100 dark:border-white/10 text-gray-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
                             >
@@ -663,6 +665,19 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                   </select>
                 </div>
 
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Payment Method</label>
+                  <select
+                    value={manualPayMethod}
+                    onChange={e => setManualPayMethod(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI / Online</option>
+                  </select>
+                </div>
+
                 {/* Amount collected */}
                 <div>
                   <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Amount Collected Now (₹)</label>
@@ -846,6 +861,30 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                               <span className={`font-black uppercase ${(PAY_STATUS_CONFIG[selectedBooking.paymentStatus] || PAY_STATUS_CONFIG.PENDING).color}`}>
                                 {(PAY_STATUS_CONFIG[selectedBooking.paymentStatus] || PAY_STATUS_CONFIG.PENDING).label}
                               </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Payment Transactions Ledger */}
+                      {selectedBooking.paymentTransactions && selectedBooking.paymentTransactions.length > 0 && (
+                        <div className="flex items-start gap-3 mt-4">
+                          <span className="material-symbols-outlined text-gray-400 text-[20px]">history</span>
+                          <div className="bg-gray-100 dark:bg-white/5 rounded-xl p-3 border border-gray-200 dark:border-white/10 w-full space-y-3">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment History</p>
+                            <div className="space-y-2">
+                              {selectedBooking.paymentTransactions.map((pt) => (
+                                <div key={pt.id} className="flex justify-between items-center text-xs border-b border-gray-200 dark:border-white/5 pb-2 last:border-0 last:pb-0">
+                                  <div>
+                                    <p className="font-bold text-gray-900 dark:text-white">{pt.paymentType}</p>
+                                    <p className="text-[10px] text-gray-500">{new Date(pt.createdAt).toLocaleString("en-IN")}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-black text-green-500">₹{pt.amount.toLocaleString("en-IN")}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{pt.paymentMethod}</p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>

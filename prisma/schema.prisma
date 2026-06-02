@@ -466,3 +466,17 @@ model Coupon {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────
+// PAYMENT TRANSACTIONS (Method Tracking)
+// ─────────────────────────────────────────────
+model PaymentTransaction {
+  id            String   @id @default(cuid())
+  referenceId   String   // The booking referenceId (CH-..., SD-..., DRV-...)
+  amount        Float
+  paymentType   String   // "Advance", "Partial Payment", "Final Payment"
+  paymentMethod String   // "Cash", "UPI"
+  createdAt     DateTime @default(now())
+
+  @@index([referenceId])
+}
