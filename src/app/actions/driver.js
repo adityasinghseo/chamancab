@@ -3,32 +3,27 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-const parseHours = (str) => {
-  const match = str?.match(/\d+/);
-  return match ? parseInt(match[0]) : 8;
-};
-
 export async function createDriver(formData) {
   const name = formData.get("name");
-  const dutyHours = formData.get("dutyHours");
-  const price = parseFloat(formData.get("price"));
-  const costPerHour = price / parseHours(dutyHours);
+  const halfTimePrice = parseFloat(formData.get("halfTimePrice"));
+  const fullTimePrice = parseFloat(formData.get("fullTimePrice"));
+  const automaticPrice = parseFloat(formData.get("automaticPrice"));
 
   await prisma.driver.create({
-    data: { name, dutyHours, costPerHour }
+    data: { name, halfTimePrice, fullTimePrice, automaticPrice }
   });
   revalidatePath("/admin/drivers");
 }
 
 export async function updateDriver(id, formData) {
   const name = formData.get("name");
-  const dutyHours = formData.get("dutyHours");
-  const price = parseFloat(formData.get("price"));
-  const costPerHour = price / parseHours(dutyHours);
+  const halfTimePrice = parseFloat(formData.get("halfTimePrice"));
+  const fullTimePrice = parseFloat(formData.get("fullTimePrice"));
+  const automaticPrice = parseFloat(formData.get("automaticPrice"));
 
   await prisma.driver.update({
     where: { id },
-    data: { name, dutyHours, costPerHour }
+    data: { name, halfTimePrice, fullTimePrice, automaticPrice }
   });
   revalidatePath("/admin/drivers");
 }

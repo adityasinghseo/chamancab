@@ -21,11 +21,21 @@ export async function submitDriverBooking(formData) {
   const driver = await prisma.driver.findUnique({ where: { id: driverId } });
   if (!driver) return { error: "Selected driver not available." };
 
-  // Determine hours (simple parse from dutyHours like "12 Hours")
-  const hoursMatch = driver.dutyHours.match(/\d+/);
-  const totalHours = hoursMatch ? parseInt(hoursMatch[0]) : 8; // fallback to 8
+  const bookingType = formData.get("bookingType");
+  if (!bookingType) return { error: "Please select a package." };
   
-  const baseAmount = totalHours * driver.costPerHour;
+  let baseAmount = 0;
+  let packageHours = 8;
+  if (bookingType === "Half Time Driver (8 Hours)") {
+    baseAmount = driver.halfTimePrice;
+    packageHours = 8;
+  } else if (bookingType === "Full Time Driver (12 Hours)") {
+    baseAmount = driver.fullTimePrice;
+    packageHours = 12;
+  } else if (bookingType === "Automatic Car Driver") {
+    baseAmount = driver.automaticPrice;
+    packageHours = 12;
+  }
   
   const couponCode = formData.get("couponCode") || null;
   const discountPercent = parseInt(formData.get("discountPercent")) || 0;
@@ -64,7 +74,9 @@ export async function submitDriverBooking(formData) {
       pickupLocation,
       startDate: startFull,
       startTime,
-      totalHours,
+      bookingType,
+      packageHours,
+      basePrice: baseAmount,
       amount,
       couponCode,
       discountPercent,
@@ -86,7 +98,8 @@ export async function submitDriverBooking(formData) {
 
 <b>Pickup:</b> ${pickupLocation}
 <b>Schedule:</b> ${startFull.toLocaleDateString('en-IN')} at ${startTime}
-<b>Driver:</b> ${driver?.name || "Professional Driver"} (${totalHours} Hours)
+<b>Driver:</b> ${driver?.name || "Professional Driver"}
+<b>Package:</b> ${bookingType}
 
 <b>Amount:</b> ₹${amount.toLocaleString('en-IN')} ${isPaid ? "(Paid Online via Razorpay)" : "(Cash / Unpaid)"}
   `.trim();

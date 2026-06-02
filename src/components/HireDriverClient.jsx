@@ -27,10 +27,6 @@ export default function HireDriverClient({ drivers }) {
     setSelectedDriver(null);
   };
 
-  const parseHours = (str) => {
-    const match = str?.match(/\d+/);
-    return match ? parseInt(match[0]) : 8;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,27 +72,18 @@ export default function HireDriverClient({ drivers }) {
                 </div>
               </div>
 
-              <div className="bg-black/40 rounded-2xl p-5 mb-6 border border-white/5">
-                <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">schedule</span>
-                  Standard Duty ({drv.dutyHours})
-                </p>
-                <div className="flex items-end gap-2">
-                  <p className="text-3xl font-black text-white leading-none">
-                    ₹{drv.halfDayPrice || drv.costPerHour * parseHours(drv.dutyHours)}
-                  </p>
-                  <p className="text-sm font-medium text-white/50 mb-1">/ Trip</p>
+              <div className="space-y-3 mb-8 flex-1 mt-4">
+                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Half Time Driver (8 Hours)</p>
+                  <p className="text-xl font-black text-white">₹{drv.halfTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
                 </div>
-              </div>
-
-              <div className="space-y-3 mb-8 flex-1">
-                <div className="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl">
-                  <span className="text-sm text-white/70 font-medium">Full Day</span>
-                  <span className="font-bold text-white">₹{drv.fullDayPrice || "Contact us"}</span>
+                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Full Time Driver (12 Hours)</p>
+                  <p className="text-xl font-black text-white">₹{drv.fullTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
                 </div>
-                <div className="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl">
-                  <span className="text-sm text-white/70 font-medium">Night Charges</span>
-                  <span className="font-bold text-white">Applicable</span>
+                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Automatic Car Driver</p>
+                  <p className="text-xl font-black text-white">₹{drv.automaticPrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
                 </div>
               </div>
 
@@ -261,23 +248,36 @@ export default function HireDriverClient({ drivers }) {
                     </div>
                   </div>
 
-                  {/* Pricing info */}
-                  <div className="bg-white/5 rounded-2xl p-5 border border-white/10 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                      <span className="material-symbols-outlined text-6xl">receipt_long</span>
-                    </div>
-                    <p className="text-xs text-white/60 mb-1">Standard {selectedDriver.dutyHours} shift</p>
-                    <p className="text-lg font-black text-white">
-                      <span className="text-blue-400 font-bold">Estimated Fare:</span>{" "}
-                      ₹{selectedDriver.halfDayPrice || selectedDriver.costPerHour * parseHours(selectedDriver.dutyHours)}{" "}
-                      <span className="text-sm font-medium text-white/50">(Min Base)</span>
-                    </p>
-                    <p className="text-xs text-yellow-400/70 mt-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">info</span>
-                      Pay directly to the driver. No online payment needed.
-                    </p>
+                  {/* Package Selection */}
+                  <div className="space-y-3 mb-6 mt-4">
+                    <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">
+                      Select Package <span className="text-red-500">*</span>
+                    </label>
+                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                      <input type="radio" name="bookingType" value="Half Time Driver (8 Hours)" required className="accent-primary w-4 h-4" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">Half Time Driver</p>
+                        <p className="text-xs text-white/50">8 Hours</p>
+                      </div>
+                      <p className="font-bold text-white">₹{selectedDriver.halfTimePrice}</p>
+                    </label>
+                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                      <input type="radio" name="bookingType" value="Full Time Driver (12 Hours)" className="accent-primary w-4 h-4" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">Full Time Driver</p>
+                        <p className="text-xs text-white/50">12 Hours</p>
+                      </div>
+                      <p className="font-bold text-white">₹{selectedDriver.fullTimePrice}</p>
+                    </label>
+                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                      <input type="radio" name="bookingType" value="Automatic Car Driver" className="accent-primary w-4 h-4" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">Automatic Car Driver</p>
+                        <p className="text-xs text-white/50">12 Hours</p>
+                      </div>
+                      <p className="font-bold text-white">₹{selectedDriver.automaticPrice}</p>
+                    </label>
                   </div>
-
                   {/* Important Modal Note */}
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
                     <p className="text-yellow-400/80 text-[11px] leading-relaxed">

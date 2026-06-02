@@ -359,16 +359,24 @@ model SelfDriveBooking {
 // DRIVERS & DRIVER BOOKINGS
 // ─────────────────────────────────────────────
 model Driver {
-  id            String   @id @default(cuid())
-  name          String
-  dutyHours     String   @default("8 Hours")
-  costPerHour   Float    @default(100)
-  nightCharge   Float    @default(200)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
   
-  bookings      DriverBooking[]
+  // Legacy fields (kept for safety, do not use for new flow)
+  dutyHours       String   @default("8 Hours")
+  costPerHour     Float    @default(100)
+  nightCharge     Float    @default(200)
+
+  // New fields for package pricing
+  halfTimePrice   Float    @default(500)
+  fullTimePrice   Float    @default(700)
+  automaticPrice  Float    @default(1000)
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  bookings        DriverBooking[]
 }
 
 model DriverBooking {
@@ -385,7 +393,8 @@ model DriverBooking {
   startDate       DateTime
   startTime       String
 
-  bookingType         String   // "half_day" | "full_day"
+  bookingType         String   // "Half Time Driver (8 Hours)" | "Full Time Driver (12 Hours)" | "Automatic Car Driver"
+  packageHours        Int      @default(8)
   basePrice           Float    // halfDayPrice or fullDayPrice
   nightChargeApplied  Boolean  @default(false)
   nightChargeAmount   Float    @default(0)
