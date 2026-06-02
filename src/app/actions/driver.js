@@ -13,6 +13,7 @@ export async function createDriver(formData) {
     data: { name, halfTimePrice, fullTimePrice, automaticPrice }
   });
   revalidatePath("/admin/drivers");
+  revalidatePath("/hire-driver");
 }
 
 export async function updateDriver(id, formData) {
@@ -26,6 +27,7 @@ export async function updateDriver(id, formData) {
     data: { name, halfTimePrice, fullTimePrice, automaticPrice }
   });
   revalidatePath("/admin/drivers");
+  revalidatePath("/hire-driver");
 }
 
 export async function toggleDriverActive(id, isActive) {
@@ -34,9 +36,11 @@ export async function toggleDriverActive(id, isActive) {
     data: { isActive },
   });
   revalidatePath("/admin/drivers");
+  revalidatePath("/hire-driver");
 }
 
 export async function deleteDriver(id) {
   await prisma.driver.delete({ where: { id } });
   revalidatePath("/admin/drivers");
+  revalidatePath("/hire-driver");
 }
