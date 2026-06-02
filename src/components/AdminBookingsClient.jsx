@@ -98,7 +98,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   function openWhatsApp(booking) {
     const remaining = Math.max(0, (booking.totalFare || booking.amount) - (booking.paidAmount || 0));
     const totalAmount = booking.totalFare || booking.amount || 0;
-    const msg = `Hello ${booking.customerName},\n\nYour booking has been confirmed! 🚗\nTotal Amount - ₹${totalAmount.toLocaleString("en-IN")}\nBooking ID: ${booking.referenceId}\nRemaining Amount: ₹${remaining.toLocaleString("en-IN")}`;
+    const msg = `Hello ${booking.customerName},\n\nYour booking has been confirmed!\n\nBooking ID: ${booking.referenceId}\n\nTotal Amount: ₹${totalAmount.toLocaleString("en-IN")}\nRemaining Amount: ₹${remaining.toLocaleString("en-IN")}\n\nThank you for choosing Chaman Cab.`;
     const phone = (booking.customerPhone || "").replace(/\D/g, "");
     const waPhone = phone.startsWith("91") ? phone : `91${phone}`;
     window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, "_blank");
