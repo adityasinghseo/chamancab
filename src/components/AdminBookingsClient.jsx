@@ -852,9 +852,24 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                                 ₹{Math.max(0, (selectedBooking.totalFare || selectedBooking.amount || 0) - (selectedBooking.paidAmount || 0)).toLocaleString("en-IN")}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs border-t border-gray-200 dark:border-white/10 pt-2">
-                              <span className="text-gray-500">Method</span>
-                              <span className="text-gray-900 dark:text-white font-bold">{selectedBooking.paymentMethod}</span>
+                            <div className="flex justify-between items-start text-xs border-t border-gray-200 dark:border-white/10 pt-2">
+                              <span className="text-gray-500">Methods Used</span>
+                              <div className="text-right">
+                                {(() => {
+                                  if (!selectedBooking.paymentTransactions || selectedBooking.paymentTransactions.length === 0) {
+                                    return <span className="text-gray-900 dark:text-white font-bold">{selectedBooking.paymentMethod}</span>;
+                                  }
+                                  const totals = selectedBooking.paymentTransactions.reduce((acc, pt) => {
+                                    acc[pt.paymentMethod] = (acc[pt.paymentMethod] || 0) + pt.amount;
+                                    return acc;
+                                  }, {});
+                                  return Object.entries(totals).map(([method, amount]) => (
+                                    <div key={method} className="text-gray-900 dark:text-white font-bold">
+                                      {method}: ₹{amount.toLocaleString("en-IN")}
+                                    </div>
+                                  ));
+                                })()}
+                              </div>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-gray-500">Status</span>
