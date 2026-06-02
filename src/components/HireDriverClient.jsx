@@ -119,6 +119,14 @@ export default function HireDriverClient({ drivers }) {
         )}
       </div>
 
+      {/* Long Route Note */}
+      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mt-2 mb-8 mx-auto flex gap-3 items-start">
+        <span className="material-symbols-outlined text-yellow-400 mt-0.5">info</span>
+        <p className="text-yellow-400/90 text-sm leading-relaxed">
+          <span className="font-bold">Note:</span> For long-route bookings, customer must provide food and accommodation for the driver. An additional charge of ₹3 per kilometer will apply, and the return travel ticket for the driver must also be arranged by the customer.
+        </p>
+      </div>
+
       {/* Booking Enquiry Modal */}
       {selectedDriver && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -267,6 +275,13 @@ export default function HireDriverClient({ drivers }) {
                     <p className="text-xs text-yellow-400/70 mt-2 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[12px]">info</span>
                       Pay directly to the driver. No online payment needed.
+                    </p>
+                  </div>
+
+                  {/* Important Modal Note */}
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+                    <p className="text-yellow-400/80 text-[11px] leading-relaxed">
+                      <span className="font-semibold text-xs">Important:</span> Food and accommodation for the driver are to be provided by the customer for long-route trips. Additional charges of ₹3/km will apply for long-distance travel, and the driver's return ticket must be provided by the customer.
                     </p>
                   </div>
 
