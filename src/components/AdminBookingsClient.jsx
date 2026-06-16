@@ -29,15 +29,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   const [paymentModal, setPaymentModal]   = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
-  const [activeMenuId, setActiveMenuId] = useState(null);
-
-  useEffect(() => {
-    const handleOutsideClick = () => {
-      setActiveMenuId(null);
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, []);
+  const [actionsModalBooking, setActionsModalBooking] = useState(null);
 
   // Payment update state
   const [manualPayStatus, setManualPayStatus] = useState("PAID_OFFLINE");
@@ -332,32 +324,14 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                             </button>
                           )}
 
-                          {/* Status dropdown */}
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === b.id ? null : b.id);
-                              }}
-                              className="p-1.5 rounded-lg border border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                            </button>
-                            <div
-                              className={`absolute right-0 top-full mt-1 w-44 bg-white dark:bg-[#1a1a1a] shadow-xl rounded-xl border border-gray-100 dark:border-white/10 py-1 transition-all z-20 ${
-                                activeMenuId === b.id ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                              }`}
-                            >
-                              <button onClick={() => handleStatusChange(b.id, 'CONFIRMED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Confirmed</button>
-                              <button onClick={() => handleStatusChange(b.id, 'COMPLETED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Completed</button>
-                              <button onClick={() => handleStatusChange(b.id, 'CANCELLED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-gray-50 dark:hover:bg-white/5">✗ Cancel Trip</button>
-                              <div className="border-t border-gray-100 dark:border-white/10 my-1" />
-                              <button onClick={() => handleDeleteBooking(b.id, b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10">🗑 Delete Booking</button>
-                              <div className="border-t border-gray-100 dark:border-white/10 my-1" />
-                              <button onClick={() => handlePaymentStatusChange(b.id, 'PAID_FULL', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">₹ Mark Paid (Full)</button>
-                              <button onClick={() => handlePaymentStatusChange(b.id, 'PAID_OFFLINE', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">₹ Mark Paid (Cash)</button>
-                            </div>
-                          </div>
+                          {/* Status / Actions Trigger */}
+                          <button
+                            onClick={() => setActionsModalBooking(b)}
+                            title="Actions"
+                            className="p-1.5 rounded-lg border border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -728,6 +702,101 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Booking Actions Modal ───────────────────────────────────────────── */}
+      {actionsModalBooking && (
+        <div 
+          onClick={() => setActionsModalBooking(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
+          >
+            <div className="p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-black/20">
+              <div>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Booking Actions</p>
+                <h2 className="text-lg font-black text-gray-900 dark:text-white">#{actionsModalBooking.referenceId}</h2>
+              </div>
+              <button onClick={() => setActionsModalBooking(null)} className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-2">
+              <button 
+                onClick={() => {
+                  handleStatusChange(actionsModalBooking.id, 'CONFIRMED', actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                Mark Confirmed
+              </button>
+              
+              <button 
+                onClick={() => {
+                  handleStatusChange(actionsModalBooking.id, 'COMPLETED', actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">done_all</span>
+                Mark Completed
+              </button>
+              
+              <button 
+                onClick={() => {
+                  handleStatusChange(actionsModalBooking.id, 'CANCELLED', actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-500/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                Cancel Trip
+              </button>
+
+              <div className="border-t border-gray-100 dark:border-white/10 my-2" />
+
+              <button 
+                onClick={() => {
+                  handlePaymentStatusChange(actionsModalBooking.id, 'PAID_FULL', actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">payments</span>
+                Mark Paid (Full)
+              </button>
+
+              <button 
+                onClick={() => {
+                  handlePaymentStatusChange(actionsModalBooking.id, 'PAID_OFFLINE', actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">payments</span>
+                Mark Paid (Cash)
+              </button>
+
+              <div className="border-t border-gray-100 dark:border-white/10 my-2" />
+
+              <button 
+                onClick={() => {
+                  handleDeleteBooking(actionsModalBooking.id, actionsModalBooking.isSelfDrive, actionsModalBooking.isDriverOnly);
+                  setActionsModalBooking(null);
+                }} 
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+                Delete Booking
+              </button>
+            </div>
           </div>
         </div>
       )}
