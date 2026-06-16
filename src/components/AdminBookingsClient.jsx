@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { updateBookingStatus, updatePaymentStatus, createOfflineBooking, deleteBooking } from "@/app/actions/admin";
 import { updateBookingPayment } from "@/app/actions/booking";
 
@@ -29,6 +29,15 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   const [paymentModal, setPaymentModal]   = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isTransitioning, startTransition] = useTransition();
+  const [activeMenuId, setActiveMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveMenuId(null);
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   // Payment update state
   const [manualPayStatus, setManualPayStatus] = useState("PAID_OFFLINE");
@@ -324,11 +333,21 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                           )}
 
                           {/* Status dropdown */}
-                          <div className="relative group/actions">
-                            <button className="p-1.5 rounded-lg border border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all">
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === b.id ? null : b.id);
+                              }}
+                              className="p-1.5 rounded-lg border border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+                            >
                               <span className="material-symbols-outlined text-[18px]">more_vert</span>
                             </button>
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-[#1a1a1a] shadow-xl rounded-xl border border-gray-100 dark:border-white/10 py-1 opacity-0 pointer-events-none group-hover/actions:opacity-100 group-hover/actions:pointer-events-auto transition-all z-20">
+                            <div
+                              className={`absolute right-0 top-full mt-1 w-44 bg-white dark:bg-[#1a1a1a] shadow-xl rounded-xl border border-gray-100 dark:border-white/10 py-1 transition-all z-20 ${
+                                activeMenuId === b.id ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                              }`}
+                            >
                               <button onClick={() => handleStatusChange(b.id, 'CONFIRMED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-green-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Confirmed</button>
                               <button onClick={() => handleStatusChange(b.id, 'COMPLETED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:bg-gray-50 dark:hover:bg-white/5">✓ Mark Completed</button>
                               <button onClick={() => handleStatusChange(b.id, 'CANCELLED', b.isSelfDrive, b.isDriverOnly)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-gray-50 dark:hover:bg-white/5">✗ Cancel Trip</button>
