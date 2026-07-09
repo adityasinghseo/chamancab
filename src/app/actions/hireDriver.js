@@ -64,6 +64,8 @@ export async function submitDriverBooking(formData) {
   const razorpayPaymentId = formData.get("razorpayPaymentId");
   const isPaid = !!razorpayPaymentId;
 
+  const driverType = formData.get("driverType") || "manual";
+
   const booking = await prisma.driverBooking.create({
     data: {
       referenceId,
@@ -85,7 +87,8 @@ export async function submitDriverBooking(formData) {
       status: isPaid ? "CONFIRMED" : "PENDING",
       paymentStatus: isPaid ? "PAID_FULL" : "PENDING",
       paymentMethod: isPaid ? "RAZORPAY" : "CASH",
-      razorpayPaymentId: razorpayPaymentId || null
+      razorpayPaymentId: razorpayPaymentId || null,
+      driverType
     }
   });
 

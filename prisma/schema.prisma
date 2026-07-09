@@ -361,6 +361,7 @@ model SelfDriveBooking {
 model Driver {
   id              String   @id @default(cuid())
   name            String
+  driverType      String   @default("manual")
   
   // Legacy fields (kept for safety, do not use for new flow)
   dutyHours       String   @default("8 Hours")
@@ -388,6 +389,7 @@ model DriverBooking {
   
   driverId        String
   driver          Driver   @relation(fields: [driverId], references: [id])
+  driverType      String   @default("manual")
 
   pickupLocation  String
   startDate       DateTime

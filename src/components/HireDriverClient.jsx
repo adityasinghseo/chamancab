@@ -8,6 +8,7 @@ export default function HireDriverClient({ drivers }) {
   const [isPending, startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
+  const [selectedDriverType, setSelectedDriverType] = useState(null);
 
   // Strip country code helper
   const cleanPhone = (raw = "") => {
@@ -39,6 +40,7 @@ export default function HireDriverClient({ drivers }) {
     }
 
     fd.append("driverId", selectedDriver.id);
+    fd.append("driverType", selectedDriver.driverType || "manual");
     setIsSubmitting(true);
 
     startTransition(async () => {
@@ -55,11 +57,82 @@ export default function HireDriverClient({ drivers }) {
     });
   };
 
+  const filteredDrivers = drivers.filter(drv => (drv.driverType || "manual") === selectedDriverType);
+
+  if (selectedDriverType === null) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 uppercase tracking-wide">Hire a Professional Driver</h1>
+          <p className="text-white/60 text-base md:text-lg max-w-2xl mx-auto">
+            Choose your vehicle's transmission type to view available professional drivers and custom pricing packages.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto px-4">
+          <button
+            onClick={() => setSelectedDriverType("manual")}
+            className="bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 p-8 rounded-3xl text-left transition-all duration-300 group flex flex-col items-center md:items-start text-center md:text-left cursor-pointer"
+          >
+            <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-3xl font-black">settings</span>
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">Manual Driver</h2>
+            <p className="text-white/50 text-sm mb-8 leading-relaxed">
+              Hire a driver for manual transmission vehicles. Select from flexible 8-hour (Half Time) or 12-hour (Full Time) options.
+            </p>
+            <span className="mt-auto text-primary font-black text-sm uppercase tracking-widest flex items-center gap-2">
+              Select Manual <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </span>
+          </button>
+
+          <button
+            onClick={() => setSelectedDriverType("automatic")}
+            className="bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 p-8 rounded-3xl text-left transition-all duration-300 group flex flex-col items-center md:items-start text-center md:text-left cursor-pointer"
+          >
+            <div className="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-3xl font-black">bolt</span>
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">Automatic Driver</h2>
+            <p className="text-white/50 text-sm mb-8 leading-relaxed">
+              Hire a driver specialized in automatic transmission vehicles. Enjoy simplified flat rate automatic pricing.
+            </p>
+            <span className="mt-auto text-blue-400 font-black text-sm uppercase tracking-widest flex items-center gap-2">
+              Select Automatic <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Header and Filter Switcher */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-6 border-b border-white/5 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-white flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary text-2xl">
+              {selectedDriverType === "automatic" ? "bolt" : "settings"}
+            </span>
+            {selectedDriverType === "automatic" ? "Automatic Drivers" : "Manual Drivers"}
+          </h1>
+          <p className="text-white/50 text-sm mt-1">
+            Showing available verified drivers for {selectedDriverType === "automatic" ? "automatic" : "manual"} cars.
+          </p>
+        </div>
+        <button
+          onClick={() => setSelectedDriverType(null)}
+          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white px-4 py-2.5 rounded-xl border border-white/10 text-xs font-bold transition-all"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Change Driver Type
+        </button>
+      </div>
+
       {/* Driver Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-        {drivers.map((drv) => (
+        {filteredDrivers.map((drv) => (
           <div key={drv.id} className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden flex flex-col hover:bg-white/10 transition-colors">
             <div className="p-6 md:p-8 flex flex-col flex-1">
               <div className="flex justify-between items-start mb-6">
@@ -73,18 +146,23 @@ export default function HireDriverClient({ drivers }) {
               </div>
 
               <div className="space-y-3 mb-8 flex-1 mt-4">
-                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Half Time Driver (8 Hours)</p>
-                  <p className="text-xl font-black text-white">₹{drv.halfTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
-                </div>
-                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Full Time Driver (12 Hours)</p>
-                  <p className="text-xl font-black text-white">₹{drv.fullTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
-                </div>
-                <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Automatic Car Driver</p>
-                  <p className="text-xl font-black text-white">₹{drv.automaticPrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
-                </div>
+                {drv.driverType !== "automatic" ? (
+                  <>
+                    <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                      <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Half Time Driver (8 Hours)</p>
+                      <p className="text-xl font-black text-white">₹{drv.halfTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
+                    </div>
+                    <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                      <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Full Time Driver (12 Hours)</p>
+                      <p className="text-xl font-black text-white">₹{drv.fullTimePrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                    <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">Automatic Car Driver</p>
+                    <p className="text-xl font-black text-white">₹{drv.automaticPrice} <span className="text-xs font-medium text-white/50">/ Trip</span></p>
+                  </div>
+                )}
               </div>
 
               <button
@@ -97,11 +175,11 @@ export default function HireDriverClient({ drivers }) {
           </div>
         ))}
 
-        {drivers.length === 0 && (
+        {filteredDrivers.length === 0 && (
           <div className="col-span-full py-20 text-center">
             <span className="material-symbols-outlined text-6xl text-white/10 mb-4 block">person_off</span>
             <h3 className="text-2xl font-black text-white mb-2">No Drivers Available</h3>
-            <p className="text-white/50">There are currently no drivers listed in the inventory.</p>
+            <p className="text-white/50">There are currently no drivers listed for transmission type: {selectedDriverType}.</p>
           </div>
         )}
       </div>
@@ -157,6 +235,9 @@ export default function HireDriverClient({ drivers }) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Hidden inputs */}
+                  <input type="hidden" name="driverType" value={selectedDriver.driverType || "manual"} />
+
                   {/* Name */}
                   <div>
                     <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">
@@ -253,30 +334,35 @@ export default function HireDriverClient({ drivers }) {
                     <label className="text-[10px] font-black text-white/50 uppercase tracking-widest ml-1 mb-2 block">
                       Select Package <span className="text-red-500">*</span>
                     </label>
-                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                      <input type="radio" name="bookingType" value="Half Time Driver (8 Hours)" required className="accent-primary w-4 h-4" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">Half Time Driver</p>
-                        <p className="text-xs text-white/50">8 Hours</p>
-                      </div>
-                      <p className="font-bold text-white">₹{selectedDriver.halfTimePrice}</p>
-                    </label>
-                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                      <input type="radio" name="bookingType" value="Full Time Driver (12 Hours)" className="accent-primary w-4 h-4" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">Full Time Driver</p>
-                        <p className="text-xs text-white/50">12 Hours</p>
-                      </div>
-                      <p className="font-bold text-white">₹{selectedDriver.fullTimePrice}</p>
-                    </label>
-                    <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                      <input type="radio" name="bookingType" value="Automatic Car Driver" className="accent-primary w-4 h-4" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">Automatic Car Driver</p>
-                        <p className="text-xs text-white/50">12 Hours</p>
-                      </div>
-                      <p className="font-bold text-white">₹{selectedDriver.automaticPrice}</p>
-                    </label>
+                    {selectedDriver.driverType !== "automatic" ? (
+                      <>
+                        <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                          <input type="radio" name="bookingType" value="Half Time Driver (8 Hours)" defaultChecked required className="accent-primary w-4 h-4" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-white">Half Time Driver</p>
+                            <p className="text-xs text-white/50">8 Hours</p>
+                          </div>
+                          <p className="font-bold text-white">₹{selectedDriver.halfTimePrice}</p>
+                        </label>
+                        <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                          <input type="radio" name="bookingType" value="Full Time Driver (12 Hours)" className="accent-primary w-4 h-4" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-white">Full Time Driver</p>
+                            <p className="text-xs text-white/50">12 Hours</p>
+                          </div>
+                          <p className="font-bold text-white">₹{selectedDriver.fullTimePrice}</p>
+                        </label>
+                      </>
+                    ) : (
+                      <label className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                        <input type="radio" name="bookingType" value="Automatic Car Driver" defaultChecked required className="accent-primary w-4 h-4" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">Automatic Car Driver</p>
+                          <p className="text-xs text-white/50">12 Hours</p>
+                        </div>
+                        <p className="font-bold text-white">₹{selectedDriver.automaticPrice}</p>
+                      </label>
+                    )}
                   </div>
                   {/* Important Modal Note */}
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
