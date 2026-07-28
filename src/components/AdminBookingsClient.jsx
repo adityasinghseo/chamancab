@@ -13,12 +13,13 @@ const STATUS_CONFIG = {
 };
 
 const PAY_STATUS_CONFIG = {
-  PENDING:      { label: "Pending",        color: "text-yellow-500" },
-  PARTIAL_PAID: { label: "Advance",   color: "text-blue-400"  },
-  PAID_FULL:    { label: "Paid",    color: "text-green-500" },
-  PAID_OFFLINE: { label: "Paid", color: "text-green-500" },
-  PAID:         { label: "Paid",           color: "text-green-500" }, // legacy
-  FAILED:       { label: "Failed",         color: "text-red-500"   },
+  PENDING:        { label: "Pending",        color: "text-yellow-500" },
+  PARTIAL_PAID:   { label: "Advance",        color: "text-blue-400"  },
+  ADVANCE_DRIVER: { label: "Advance Driver", color: "text-purple-400" },
+  PAID_FULL:      { label: "Paid",           color: "text-green-500" },
+  PAID_OFFLINE:   { label: "Paid",           color: "text-green-500" },
+  PAID:           { label: "Paid",           color: "text-green-500" }, // legacy
+  FAILED:         { label: "Failed",         color: "text-red-500"   },
 };
 
 const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Rental" };
@@ -79,6 +80,8 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
         if (!isPaidFull && remaining > 0) return false;
       } else if (paymentFilter === "PARTIAL_PAID") {
         if (b.paymentStatus !== "PARTIAL_PAID" && !(paidAmount > 0 && remaining > 0)) return false;
+      } else if (paymentFilter === "ADVANCE_DRIVER") {
+        if (b.paymentStatus !== "ADVANCE_DRIVER") return false;
       } else if (paymentFilter === "UNPAID") {
         if (paidAmount > 0 || isPaidFull) return false;
       }
@@ -248,6 +251,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
               <option value="HAS_DUE">Pending Amount (Due &gt; ₹0)</option>
               <option value="PAID_FULL">Fully Paid</option>
               <option value="PARTIAL_PAID">Advance Paid (Partial)</option>
+              <option value="ADVANCE_DRIVER">Advance Driver</option>
               <option value="UNPAID">Unpaid (0% Paid)</option>
             </select>
 
@@ -707,6 +711,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Payment Status</label>
                         <select name="paymentStatus" className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none">
                           <option value="PARTIAL_PAID">Advance</option>
+                          <option value="ADVANCE_DRIVER">Advance Driver</option>
                           <option value="PAID_FULL">Paid</option>
                           <option value="PENDING">Pending</option>
                         </select>
@@ -799,6 +804,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                     className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
                   >
                     <option value="PARTIAL_PAID">Advance</option>
+                    <option value="ADVANCE_DRIVER">Advance Driver</option>
                     <option value="PAID_FULL">Paid</option>
                     <option value="PENDING">Pending</option>
                   </select>
