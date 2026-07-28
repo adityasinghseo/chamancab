@@ -27,6 +27,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   const [filter, setFilter]               = useState("ALL");
   const [searchQuery, setSearchQuery]     = useState("");
   const [tripTypeFilter, setTripTypeFilter] = useState("ALL");
+  const [paymentFilter, setPaymentFilter]   = useState("ALL");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [paymentModal, setPaymentModal]   = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -63,6 +64,24 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
       if (tripTypeFilter === "SELF_DRIVE" && !b.isSelfDrive) return false;
       if (tripTypeFilter === "DRIVER" && !b.isDriverOnly) return false;
       if (tripTypeFilter !== "SELF_DRIVE" && tripTypeFilter !== "DRIVER" && b.tripType !== tripTypeFilter) return false;
+    }
+
+    // Payment / Pending Amount filter
+    if (paymentFilter !== "ALL") {
+      const totalFare = b.totalFare || b.amount || 0;
+      const paidAmount = b.paidAmount || 0;
+      const remaining = Math.max(0, totalFare - paidAmount);
+      const isPaidFull = b.paymentStatus === "PAID_FULL" || b.paymentStatus === "PAID_OFFLINE" || b.paymentStatus === "PAID" || (totalFare > 0 && remaining === 0);
+
+      if (paymentFilter === "HAS_DUE") {
+        if (isPaidFull || remaining <= 0) return false;
+      } else if (paymentFilter === "PAID_FULL") {
+        if (!isPaidFull && remaining > 0) return false;
+      } else if (paymentFilter === "PARTIAL_PAID") {
+        if (b.paymentStatus !== "PARTIAL_PAID" && !(paidAmount > 0 && remaining > 0)) return false;
+      } else if (paymentFilter === "UNPAID") {
+        if (paidAmount > 0 || isPaidFull) return false;
+      }
     }
 
     // Search query filter (by customer name, ID/referenceId, phone number, email, car name, driver name, route)
@@ -150,7 +169,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   const formatDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const truncRoute = (str, len = 25) => str && str.length > len ? str.slice(0, len) + "…" : (str || "—");
 
-  const hasActiveFilters = filter !== "ALL" || tripTypeFilter !== "ALL" || searchQuery.trim() !== "";
+  const hasActiveFilters = filter !== "ALL" || tripTypeFilter !== "ALL" || paymentFilter !== "ALL" || searchQuery.trim() !== "";
 
   return (
     <div className="space-y-6">
@@ -192,8 +211,21 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
           ))}
         </div>
 
-        {/* Search Input & Trip Type Filter */}
+        {/* Search Input, Trip Type & Payment Filter */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Payment / Pending Amount Filter */}
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
+          >
+            <option value="ALL">All Payment Statuses</option>
+            <option value="HAS_DUE">Pending Amount (Due &gt; ₹0)</option>
+            <option value="PAID_FULL">Fully Paid</option>
+            <option value="PARTIAL_PAID">Advance Paid (Partial)</option>
+            <option value="UNPAID">Unpaid (0% Paid)</option>
+          </select>
+
           {/* Trip Type Filter */}
           <select
             value={tripTypeFilter}
@@ -209,7 +241,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
           </select>
 
           {/* Search Bar Input */}
-          <div className="relative min-w-[260px] sm:min-w-[320px] flex-1 sm:flex-initial">
+          <div className="relative min-w-[240px] sm:min-w-[280px] flex-1 sm:flex-initial">
             <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">
               search
             </span>
@@ -217,7 +249,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by Name, Booking ID (#CH-...), Phone..."
+              placeholder="Search Name, ID, Phone..."
               className="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             />
             {searchQuery && (
@@ -257,7 +289,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                       <p className="text-gray-500 dark:text-gray-400 text-sm font-bold">No bookings found matching your search or filters.</p>
                       {hasActiveFilters && (
                         <button
-                          onClick={() => { setSearchQuery(""); setFilter("ALL"); setTripTypeFilter("ALL"); }}
+                          onClick={() => { setSearchQuery(""); setFilter("ALL"); setTripTypeFilter("ALL"); setPaymentFilter("ALL"); }}
                           className="mt-2 text-xs font-black text-primary hover:underline uppercase tracking-wider"
                         >
                           Clear all filters
