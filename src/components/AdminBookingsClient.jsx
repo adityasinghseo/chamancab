@@ -192,10 +192,10 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
         </button>
       </div>
 
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Status Filter Tabs */}
-        <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-gray-200 dark:border-white/10 overflow-x-auto custom-scrollbar">
+      {/* Search and Filters Bar - 2 Line Clean Layout */}
+      <div className="space-y-3">
+        {/* Line 1: Status Filter Tabs */}
+        <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl w-fit max-w-full border border-gray-200 dark:border-white/10 overflow-x-auto custom-scrollbar">
           {["ALL", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((s) => (
             <button
               key={s}
@@ -211,37 +211,10 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
           ))}
         </div>
 
-        {/* Search Input, Trip Type & Payment Filter */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Payment / Pending Amount Filter */}
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
-          >
-            <option value="ALL">All Payment Statuses</option>
-            <option value="HAS_DUE">Pending Amount (Due &gt; ₹0)</option>
-            <option value="PAID_FULL">Fully Paid</option>
-            <option value="PARTIAL_PAID">Advance Paid (Partial)</option>
-            <option value="UNPAID">Unpaid (0% Paid)</option>
-          </select>
-
-          {/* Trip Type Filter */}
-          <select
-            value={tripTypeFilter}
-            onChange={(e) => setTripTypeFilter(e.target.value)}
-            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
-          >
-            <option value="ALL">All Trip Types</option>
-            <option value="ONE_WAY">One Way</option>
-            <option value="ROUND_TRIP">Round Trip</option>
-            <option value="RENTAL">Local Rental</option>
-            <option value="SELF_DRIVE">Self Drive</option>
-            <option value="DRIVER">Driver Hire</option>
-          </select>
-
+        {/* Line 2: Search Input (Left) & Filter Dropdowns (Right) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search Bar Input */}
-          <div className="relative min-w-[240px] sm:min-w-[280px] flex-1 sm:flex-initial">
+          <div className="relative flex-1 min-w-[240px] sm:max-w-md">
             <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">
               search
             </span>
@@ -249,7 +222,7 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Name, ID, Phone..."
+              placeholder="Search Name, Booking ID (#CH-...), Phone..."
               className="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             />
             {searchQuery && (
@@ -259,6 +232,47 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
                 title="Clear search"
               >
                 <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Payment / Pending Amount Filter */}
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
+            >
+              <option value="ALL">All Payment Statuses</option>
+              <option value="HAS_DUE">Pending Amount (Due &gt; ₹0)</option>
+              <option value="PAID_FULL">Fully Paid</option>
+              <option value="PARTIAL_PAID">Advance Paid (Partial)</option>
+              <option value="UNPAID">Unpaid (0% Paid)</option>
+            </select>
+
+            {/* Trip Type Filter */}
+            <select
+              value={tripTypeFilter}
+              onChange={(e) => setTripTypeFilter(e.target.value)}
+              className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
+            >
+              <option value="ALL">All Trip Types</option>
+              <option value="ONE_WAY">One Way</option>
+              <option value="ROUND_TRIP">Round Trip</option>
+              <option value="RENTAL">Local Rental</option>
+              <option value="SELF_DRIVE">Self Drive</option>
+              <option value="DRIVER">Driver Hire</option>
+            </select>
+
+            {/* Reset Filters Icon */}
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setSearchQuery(""); setFilter("ALL"); setTripTypeFilter("ALL"); setPaymentFilter("ALL"); }}
+                className="p-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all flex items-center gap-1 shrink-0"
+                title="Reset all filters"
+              >
+                <span className="material-symbols-outlined text-[18px]">restart_alt</span>
               </button>
             )}
           </div>
