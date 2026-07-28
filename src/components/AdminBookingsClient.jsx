@@ -25,6 +25,8 @@ const TRIP_LABELS = { ONE_WAY: "One Way", ROUND_TRIP: "Round Trip", RENTAL: "Ren
 
 export default function AdminBookingsClient({ initialBookings, cars = [], cities = [], packages = [], drivers = [], selfDriveCars = [] }) {
   const [filter, setFilter]               = useState("ALL");
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [tripTypeFilter, setTripTypeFilter] = useState("ALL");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [paymentModal, setPaymentModal]   = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -52,9 +54,47 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
     });
   }
 
-  const filteredBookings = filter === "ALL"
-    ? initialBookings
-    : initialBookings.filter(b => b.status === filter);
+  const filteredBookings = initialBookings.filter((b) => {
+    // Status filter
+    if (filter !== "ALL" && b.status !== filter) return false;
+
+    // Trip Type filter
+    if (tripTypeFilter !== "ALL") {
+      if (tripTypeFilter === "SELF_DRIVE" && !b.isSelfDrive) return false;
+      if (tripTypeFilter === "DRIVER" && !b.isDriverOnly) return false;
+      if (tripTypeFilter !== "SELF_DRIVE" && tripTypeFilter !== "DRIVER" && b.tripType !== tripTypeFilter) return false;
+    }
+
+    // Search query filter (by customer name, ID/referenceId, phone number, email, car name, driver name, route)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const ref = (b.referenceId || "").toLowerCase();
+      const name = (b.customerName || "").toLowerCase();
+      const phone = (b.customerPhone || "").toLowerCase();
+      const email = (b.customerEmail || "").toLowerCase();
+      const carName = (b.car?.name || "").toLowerCase();
+      const driverName = (b.driver?.name || "").toLowerCase();
+      const fromCity = (b.fromCity?.name || "").toLowerCase();
+      const toCity = (b.toCity?.name || "").toLowerCase();
+      const pickupAddr = (b.pickupAddress || b.pickupLocationText || "").toLowerCase();
+      const dropAddr = (b.dropAddress || "").toLowerCase();
+
+      return (
+        ref.includes(q) ||
+        name.includes(q) ||
+        phone.includes(q) ||
+        email.includes(q) ||
+        carName.includes(q) ||
+        driverName.includes(q) ||
+        fromCity.includes(q) ||
+        toCity.includes(q) ||
+        pickupAddr.includes(q) ||
+        dropAddr.includes(q)
+      );
+    }
+
+    return true;
+  });
 
   const handleStatusChange = async (id, newStatus, isSelfDrive, isDriverOnly) => {
     startTransition(async () => {
@@ -110,13 +150,19 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
   const formatDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const truncRoute = (str, len = 25) => str && str.length > len ? str.slice(0, len) + "…" : (str || "—");
 
+  const hasActiveFilters = filter !== "ALL" || tripTypeFilter !== "ALL" || searchQuery.trim() !== "";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">Reservations</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total {initialBookings.length} bookings received across all channels.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {hasActiveFilters
+              ? `Showing ${filteredBookings.length} of ${initialBookings.length} bookings.`
+              : `Total ${initialBookings.length} bookings received across all channels.`}
+          </p>
         </div>
         <button
           onClick={() => { setShowCreateModal(true); setCreateDone(false); }}
@@ -127,21 +173,64 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-gray-200 dark:border-white/10 overflow-x-auto custom-scrollbar">
-        {["ALL", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-              filter === s
-                ? "bg-white dark:bg-surface-dark text-[#181611] dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-white/10"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
+      {/* Search and Filters Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Status Filter Tabs */}
+        <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-gray-200 dark:border-white/10 overflow-x-auto custom-scrollbar">
+          {["ALL", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                filter === s
+                  ? "bg-white dark:bg-surface-dark text-[#181611] dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-white/10"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {s === "ALL" ? "All Trips" : s}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Input & Trip Type Filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Trip Type Filter */}
+          <select
+            value={tripTypeFilter}
+            onChange={(e) => setTripTypeFilter(e.target.value)}
+            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-primary transition-all cursor-pointer"
           >
-            {s === "ALL" ? "All Trips" : s}
-          </button>
-        ))}
+            <option value="ALL">All Trip Types</option>
+            <option value="ONE_WAY">One Way</option>
+            <option value="ROUND_TRIP">Round Trip</option>
+            <option value="RENTAL">Local Rental</option>
+            <option value="SELF_DRIVE">Self Drive</option>
+            <option value="DRIVER">Driver Hire</option>
+          </select>
+
+          {/* Search Bar Input */}
+          <div className="relative min-w-[260px] sm:min-w-[320px] flex-1 sm:flex-initial">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">
+              search
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by Name, Booking ID (#CH-...), Phone..."
+              className="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                title="Clear search"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -162,8 +251,19 @@ export default function AdminBookingsClient({ initialBookings, cars = [], cities
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center text-gray-400 text-sm font-bold italic">
-                    No bookings found matching filters.
+                  <td colSpan={7} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-4xl text-gray-400 dark:text-gray-600">search_off</span>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm font-bold">No bookings found matching your search or filters.</p>
+                      {hasActiveFilters && (
+                        <button
+                          onClick={() => { setSearchQuery(""); setFilter("ALL"); setTripTypeFilter("ALL"); }}
+                          className="mt-2 text-xs font-black text-primary hover:underline uppercase tracking-wider"
+                        >
+                          Clear all filters
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
